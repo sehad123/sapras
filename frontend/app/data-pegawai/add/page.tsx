@@ -9,14 +9,14 @@ export default function Register() {
     name: "",
     email: "",
     password: "",
-    role: "PEMINJAM", // Default role
+    role: "", // Default role
   });
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await fetch("http://localhost:5000/register", {
+    const res = await fetch("http://localhost:5000/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -96,7 +96,7 @@ export default function Register() {
               <option value="Pegawai">Pegawai</option>
               {/* <option value="Mahasiswa">Mahasiswa</option> */}
               {/* <option value="Alumni">Alumni</option> */}
-              <option value="Dosen">Dosen</option>
+              {/* <option value="Dosen">Dosen</option> */}
               {/* <option value="SUPER ADMIN">Super Admin</option> */}
             </select>
           </div>

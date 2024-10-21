@@ -17,7 +17,7 @@ export default function PegawaiList() {
   useEffect(() => {
     const fetchPegawaiUsers = async () => {
       try {
-        const res = await fetch("http://localhost:5000/users/pegawai");
+        const res = await fetch("http://localhost:5000/api/users/pegawai");
         if (!res.ok) {
           throw new Error(`HTTP error! Status: ${res.status}`);
         }
@@ -50,7 +50,7 @@ export default function PegawaiList() {
   // Handle save changes after editing
   const handleSaveUser = async (id, updatedUser) => {
     try {
-      const res = await fetch(`http://localhost:5000/users/${id}`, {
+      const res = await fetch(`http://localhost:5000/api/users/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -85,7 +85,7 @@ export default function PegawaiList() {
   const handleConfirmDelete = async () => {
     if (deletingUser) {
       try {
-        const res = await fetch(`http://localhost:5000/users/${deletingUser.id}`, {
+        const res = await fetch(`http://localhost:5000/api/users/${deletingUser.id}`, {
           method: "DELETE",
         });
         if (!res.ok) {

@@ -9,10 +9,17 @@ router.post(
   "/barang/add",
   upload.single("photo"),
   asyncHandler(async (req, res) => {
-    const { name, type, lokasi, kondisi } = req.body;
-    const photoPath = req.file ? req.file.path : null; // Get the file path
+    const { name, type, lokasi, kondisi, available } = req.body;
+    const photoPath = req.file ? `/uploads/${req.file.filename}` : null; // Prefix with "/uploads/"
 
-    const barang = await addBarang({ name, type, lokasi, kondisi, photo: photoPath });
+    const barang = await addBarang({
+      name,
+      type,
+      lokasi,
+      kondisi,
+      photo: photoPath, // Store relative URL for the image
+      available,
+    });
     res.json(barang);
   })
 );
@@ -41,27 +48,21 @@ router.get(
 // Update a barang by ID
 router.patch(
   "/barang/:id",
-  upload.single("photo"), // Allow photo upload during update
+  upload.single("photo"),
   asyncHandler(async (req, res) => {
     const { name, type, lokasi, kondisi, available } = req.body;
-    const photoPath = req.file ? req.file.path : null; // Get the new file path if uploaded
+    const photoPath = req.file ? `/uploads/${req.file.filename}` : null;
 
-    // Create an object for the updated data
     const updatedData = {};
-
-    // Only include fields that are present in the request body
     if (name) updatedData.name = name;
     if (type) updatedData.type = type;
     if (lokasi) updatedData.lokasi = lokasi;
     if (kondisi) updatedData.kondisi = kondisi;
+    if (available) updatedData.available = available;
     if (photoPath) updatedData.photo = photoPath;
 
-    // Handle the available field if present
-    if (available !== undefined) {
-      updatedData.available = Boolean(available); // Convert to boolean
-    }
-
-    const updatedBarang = await updateBarang(req.params.id, updatedData);
+    const barangId = parseInt(req.params.id);
+    const updatedBarang = await updateBarang(barangId, updatedData);
     res.json(updatedBarang);
   })
 );

@@ -1,146 +1,77 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useState } from "react";
 
-export default function RegisterBarang() {
-  const [formData, setFormData] = useState({
+export default function AddBarangModal({ onClose, onSave }) {
+  const [newBarang, setNewBarang] = useState({
     name: "",
     type: "",
     kondisi: "",
-    available: true, // Default to true
     lokasi: "",
-    photo: null, // Field for image upload
+    available: "",
+    photo: null, // Add a new field for photo
   });
-  const router = useRouter();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewBarang((prevBarang) => ({ ...prevBarang, [name]: value }));
+  };
 
-    const formDataToSend = new FormData();
-    formDataToSend.append("name", formData.name);
-    formDataToSend.append("type", formData.type);
-    formDataToSend.append("kondisi", formData.kondisi);
-    formDataToSend.append("available", formData.available); // Append boolean value
-    formDataToSend.append("lokasi", formData.lokasi);
-    formDataToSend.append("photo", formData.photo); // Append the photo
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]; // Get the uploaded file
+    setNewBarang((prevBarang) => ({ ...prevBarang, photo: file }));
+  };
 
-    const res = await fetch("http://localhost:5000/barang/add", {
-      method: "POST",
-      body: formDataToSend,
+  const handleSave = () => {
+    const formData = new FormData();
+    // Append all the fields to formData
+    Object.keys(newBarang).forEach((key) => {
+      formData.append(key, newBarang[key]);
     });
-
-    if (res.ok) {
-      toast.success("Penambahan Barang berhasil!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      setTimeout(() => {
-        router.push("/data-barang"); // Redirect to barang data page
-      }, 3000);
-    } else {
-      toast.error("Penambahan Barang gagal, coba lagi.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-    }
-  };
-
-  const handleImageChange = (e) => {
-    setFormData({ ...formData, photo: e.target.files[0] });
-  };
-
-  const handleAvailableChange = (e) => {
-    setFormData({ ...formData, available: e.target.value === "ya" });
+    onSave(formData); // Call the onSave function passed as a prop
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <ToastContainer />
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h1 className="text-3xl font-bold text-center mb-6">Tambah Barang</h1>
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
-          {/* Nama Barang */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Nama Barang</label>
-            <input
-              type="text"
-              placeholder="Nama Barang"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-              required
-            />
-          </div>
-
-          {/* Jenis Barang */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Jenis Barang</label>
-            <input
-              type="text"
-              placeholder="Jenis Barang"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {/* Kondisi */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Kondisi</label>
-            <input
-              type="text"
-              placeholder="Kondisi"
-              value={formData.kondisi}
-              onChange={(e) => setFormData({ ...formData, kondisi: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {/* Lokasi */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Lokasi</label>
-            <input
-              type="text"
-              placeholder="Lokasi Barang"
-              value={formData.lokasi}
-              onChange={(e) => setFormData({ ...formData, lokasi: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-            />
-          </div>
-
-          {/* Available (Dropdown) */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Tersedia</label>
-            <select value={formData.available ? "ya" : "tidak"} onChange={handleAvailableChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required>
-              <option value="ya">Ya</option>
-              <option value="tidak">Tidak</option>
-            </select>
-          </div>
-
-          {/* Photo Upload */}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">Upload Foto Barang</label>
-            <input type="file" accept="image/*" onChange={handleImageChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" required />
-          </div>
-
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-200">
-            Tambah Barang
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4">Tambah Barang</h2>
+        <div className="mb-4">
+          <label className="block mb-2">Nama Barang</label>
+          <input type="text" name="name" value={newBarang.name} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Kategori</label>
+          <input type="text" name="type" value={newBarang.type} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Kondisi</label>
+          <input type="text" name="kondisi" value={newBarang.kondisi} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Lokasi</label>
+          <input type="text" name="lokasi" value={newBarang.lokasi} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
+        </div>
+        <div className="mb-4">
+          {/* <label className="block mb-2">Tersedia</label> */}
+          <select name="available" value={newBarang.available} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded">
+            <option value="" disabled>
+              Tersedia
+            </option>
+            <option value="Ya">Ya</option>
+            <option value="Tidak">Tidak</option>
+          </select>
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2">Foto</label>
+          <input type="file" name="photo" onChange={handleFileChange} className="w-full p-2 border border-gray-300 rounded" />
+        </div>
+        <div className="flex justify-end">
+          <button onClick={onClose} className="bg-gray-300 text-gray-700 px-4 py-2 rounded mr-2">
+            Batal
           </button>
-        </form>
+          <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded">
+            Simpan
+          </button>
+        </div>
       </div>
     </div>
   );

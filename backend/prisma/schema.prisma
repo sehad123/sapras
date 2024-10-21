@@ -29,7 +29,7 @@ model Barang {
   name       String
   type       String?  // Jenis barang
   kondisi    String?
-  available  Boolean  @default(true)
+  available  String?  
   lokasi     String?
   createdAt  DateTime @default(now())
   peminjaman Peminjaman[]

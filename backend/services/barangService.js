@@ -2,9 +2,17 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // Create a new barang
-const addBarang = async ({ name, type, lokasi, kondisi, photo }) => {
+const addBarang = async ({ name, type, lokasi, kondisi, photo, available }) => {
+  // Check for valid values and handle missing/undefined values
   return prisma.barang.create({
-    data: { name, type, lokasi, kondisi, photo }, // Added kondisi and photo
+    data: {
+      name: name || "", // Ensure name is not undefined/null
+      type: type || "", // Set default value if type is missing
+      lokasi: lokasi || "", // Set default value if lokasi is missing
+      kondisi: kondisi || "", // Set default value if kondisi is missing
+      available: available || "", // Set default value if kondisi is missing
+      photo: photo || null, // Ensure photo is either a valid path or null
+    },
   });
 };
 

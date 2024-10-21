@@ -10,12 +10,25 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
   const [kondisi, setKondisi] = useState(barang.kondisi || ""); // Optional field
   const [available, setAvailable] = useState(barang.available);
   const [lokasi, setLokasi] = useState(barang.lokasi || ""); // Optional field
-  const [photo, setPhoto] = useState(barang.photo || ""); // Optional field
+  const [photo, setPhoto] = useState(null); // Updated: use state for file
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
     setLoading(true);
-    await onSave(barang.id, { name, type, kondisi, available, lokasi, photo });
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("type", type);
+    formData.append("kondisi", kondisi);
+    formData.append("available", available);
+    formData.append("lokasi", lokasi);
+
+    // Append the photo file if selected
+    if (photo) {
+      formData.append("photo", photo);
+    }
+
+    await onSave(barang.id, formData); // Pass FormData to onSave
     setLoading(false);
   };
 
@@ -48,10 +61,10 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Available</label>
-            <select value={available} onChange={(e) => setAvailable(e.target.value === "true")} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500">
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+            <label className="block text-sm font-medium">Tersedia</label>
+            <select value={available} onChange={(e) => setAvailable(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500">
+              <option value="Ya">Ya</option>
+              <option value="Tidak">Tidak</option>
             </select>
           </div>
 
@@ -61,8 +74,8 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Photo URL</label>
-            <input type="text" value={photo} onChange={(e) => setPhoto(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" />
+            <label className="block text-sm font-medium">Photo</label>
+            <input type="file" onChange={(e) => setPhoto(e.target.files[0])} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" />
           </div>
         </div>
 
