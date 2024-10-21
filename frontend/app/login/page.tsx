@@ -84,14 +84,6 @@ export default function Login() {
             Masuk
           </button>
         </form>
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Belum punya akun?{" "}
-            <a href="/register" className="text-blue-500 hover:text-blue-700 font-bold">
-              Daftar sekarang
-            </a>
-          </p>
-        </div>
       </div>
     </div>
   );
