@@ -3,12 +3,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
-import EditPegawaiModal from "../edit/page"; // Import the new modal component
-import DeleteConfirmationModal from "../delete/page"; // Import the Delete Modal
+import EditPegawaiModal from "../edit/page"; // Import edit modal
+import DeleteConfirmationModal from "../delete/page"; // Import delete modal
+import AddPegawaiModal from "../add/page"; // Import the new Add Modal
 
 export default function PegawaiList() {
   const [pegawaiUsers, setPegawaiUsers] = useState([]); // State for Pegawai users
   const [error, setError] = useState(null); // State for handling errors
+  const [addingPegawai, setAddingPegawai] = useState(false); // State for showing Add Modal
   const [editingUser, setEditingUser] = useState(null); // State for the user being edited
   const [deletingUser, setDeletingUser] = useState(null); // State for the user being deleted
   const router = useRouter();
@@ -32,9 +34,36 @@ export default function PegawaiList() {
     fetchPegawaiUsers();
   }, []);
 
-  // Handle add new pegawai
+  // Handle adding new Pegawai
   const handleAddPegawai = () => {
-    router.push("/data-pegawai/add");
+    setAddingPegawai(true); // Open the Add Modal
+  };
+
+  const handleCloseAddModal = () => {
+    setAddingPegawai(false); // Close the Add Modal
+  };
+
+  const handleSavePegawai = async (newUser) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to add Pegawai. Status: ${res.status}`);
+      }
+      const data = await res.json();
+
+      // Add the new user to the state
+      setPegawaiUsers([...pegawaiUsers, data]);
+      handleCloseAddModal(); // Close the modal after saving
+    } catch (error) {
+      console.error("Error adding Pegawai user:", error.message);
+      setError("Error adding Pegawai user.");
+    }
   };
 
   // Handle opening edit modal for a Pegawai user
@@ -120,6 +149,7 @@ export default function PegawaiList() {
               <th className="border border-gray-300 px-4 py-2 text-left">No</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Nama</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
               <th className="border border-gray-300 px-4 py-2 text-center">Action</th>
             </tr>
           </thead>
@@ -130,6 +160,7 @@ export default function PegawaiList() {
                   <td className="border border-gray-300 px-4 py-2">{index + 1}</td> {/* Nomer Urut */}
                   <td className="border border-gray-300 px-4 py-2">{user.name}</td>
                   <td className="border border-gray-300 px-4 py-2">{user.email}</td>
+                  <td className="border border-gray-300 px-4 py-2">{user.role}</td>
                   <td className="border border-gray-300 px-4 py-2 flex justify-around text-center">
                     {/* Edit and Delete Icons */}
                     <button className="text-blue-500 hover:text-blue-700" onClick={() => handleEditPegawai(user)}>
@@ -151,6 +182,9 @@ export default function PegawaiList() {
           </tbody>
         </table>
       </div>
+
+      {/* Add Pegawai Modal */}
+      {addingPegawai && <AddPegawaiModal onSave={handleSavePegawai} onClose={handleCloseAddModal} />}
 
       {/* Edit Pegawai Modal */}
       {editingUser && <EditPegawaiModal user={editingUser} onClose={handleCloseEditModal} onSave={handleSaveUser} />}

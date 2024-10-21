@@ -51,8 +51,12 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Type</label>
-            <input type="text" value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" />
+            <label className="block text-sm font-medium">Kategori</label>
+            {/* <input type="text" value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" /> */}
+            <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500">
+              <option value="Barang">Barang</option>
+              <option value="Ruangan">Ruangan</option>
+            </select>
           </div>
 
           <div>

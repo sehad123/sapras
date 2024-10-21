@@ -34,14 +34,19 @@ export default function AddBarangModal({ onClose, onSave }) {
     <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-xl font-bold mb-4">Tambah Barang</h2>
-        <div className="mb-4">
-          <label className="block mb-2">Nama Barang</label>
+        <label className="block mb-2">Kategori</label>
+        <select name="type" value={newBarang.type} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded">
+          <option value="" disabled>
+            Pilih Kategori
+          </option>
+          <option value="Barang">Barang</option>
+          <option value="Ruangan">Ruangan</option>
+        </select>
+        <div className="mb-4 mt-2">
+          <label className="block mb-2">Nama</label>
           <input type="text" name="name" value={newBarang.name} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
         </div>
-        <div className="mb-4">
-          <label className="block mb-2">Kategori</label>
-          <input type="text" name="type" value={newBarang.type} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
-        </div>
+
         <div className="mb-4">
           <label className="block mb-2">Kondisi</label>
           <input type="text" name="kondisi" value={newBarang.kondisi} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
@@ -54,7 +59,7 @@ export default function AddBarangModal({ onClose, onSave }) {
           {/* <label className="block mb-2">Tersedia</label> */}
           <select name="available" value={newBarang.available} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded">
             <option value="" disabled>
-              Tersedia
+              Pilih Ketersediaan
             </option>
             <option value="Ya">Ya</option>
             <option value="Tidak">Tidak</option>
