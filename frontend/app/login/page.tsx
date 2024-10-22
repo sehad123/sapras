@@ -35,8 +35,13 @@ export default function Login() {
         theme: "colored",
       });
 
+      // Periksa role user dan arahkan ke halaman yang sesuai
       setTimeout(() => {
-        router.push("/"); // Redirect ke halaman utama setelah 3 detik
+        if (data.user.role === "Admin") {
+          router.push("/data-barang"); // Arahkan ke halaman data barang
+        } else {
+          router.push("/peminjaman"); // Arahkan ke halaman peminjaman
+        }
       }, 3000);
     } else {
       toast.error("Login gagal, coba lagi.", {

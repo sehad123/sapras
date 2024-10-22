@@ -137,7 +137,7 @@ export default function PegawaiList() {
       </button>
 
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-3xl w-full">
-        <h1 className="text-3xl font-bold text-center mb-6">Daftar Pegawai</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Daftar Pengguna</h1>
 
         {/* Error message */}
         {error && <div className="text-red-500 text-center mb-4">{error}</div>}

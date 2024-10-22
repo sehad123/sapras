@@ -28,9 +28,33 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTim
 };
 
 const approvePeminjaman = async (id) => {
+  // Mulai transaksi agar update peminjaman dan barang terjadi bersamaan
+  const transaction = await prisma.$transaction(async (prisma) => {
+    // Update status peminjaman menjadi "APPROVED"
+    const peminjaman = await prisma.peminjaman.update({
+      where: { id },
+      data: { status: "APPROVED" },
+    });
+
+    if (!peminjaman) {
+      throw new Error("Peminjaman tidak ditemukan");
+    }
+
+    // Update barang yang dipinjam, set kolom 'available' menjadi 'Tidak'
+    await prisma.barang.update({
+      where: { id: peminjaman.barangId },
+      data: { available: "Tidak" },
+    });
+
+    return peminjaman;
+  });
+
+  return transaction;
+};
+const rejectPeminjaman = async (id) => {
   const peminjaman = await prisma.peminjaman.update({
     where: { id },
-    data: { status: "APPROVED" },
+    data: { status: "REJECTED" },
   });
 
   if (!peminjaman) {
@@ -78,4 +102,36 @@ const trackPeminjaman = async (userId) => {
   return peminjaman;
 };
 
-module.exports = { createPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman };
+// Fetch all peminjaman data, including related barang and user information
+const getAllPeminjaman = async () => {
+  const peminjamanList = await prisma.peminjaman.findMany({
+    include: {
+      barang: {
+        select: { name: true }, // Select the 'name' field from barang
+      },
+      user: {
+        select: { name: true, email: true }, // Select the 'name' and 'email' fields from the user
+      },
+    },
+    orderBy: {
+      createdAt: "desc", // Mengurutkan berdasarkan 'createdAt' secara menurun
+    },
+  });
+
+  if (!peminjamanList.length) {
+    throw new Error("Belum ada data peminjaman");
+  }
+
+  return peminjamanList;
+};
+
+const countPendingPeminjaman = async () => {
+  const pendingCount = await prisma.peminjaman.count({
+    where: {
+      status: "PENDING",
+    },
+  });
+
+  return pendingCount;
+};
+module.exports = { createPeminjaman, rejectPeminjaman, countPendingPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman };

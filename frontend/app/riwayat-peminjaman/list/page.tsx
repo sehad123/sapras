@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { faFile } from "@fortawesome/free-solid-svg-icons";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PeminjamanList = ({ userId }) => {
   const [peminjaman, setPeminjaman] = useState([]);
@@ -43,15 +44,18 @@ const PeminjamanList = ({ userId }) => {
         },
       });
       if (!response.ok) {
-        throw new Error("Failed to return the item");
+        throw new Error("Barang gagal dikembalikan");
       }
       const updatedItem = await response.json();
-      alert("Item returned successfully!");
+
+      // Menggunakan toast untuk notifikasi sukses
+      toast.success("Barang Berhasil Dikembalikan !", {});
 
       // Update the list locally without re-fetching
       setPeminjaman((prevPeminjaman) => prevPeminjaman.map((item) => (item.id === peminjamanId ? { ...item, status: "DIKEMBALIKAN" } : item)));
     } catch (error) {
-      alert(error.message);
+      // Menggunakan toast untuk notifikasi error
+      toast.error(error.message, {});
     }
   };
 
@@ -64,7 +68,7 @@ const PeminjamanList = ({ userId }) => {
   }
 
   return (
-    <div className="peminjaman-list p-6 bg-gray-100">
+    <div className="peminjaman-list p-6 bg-gray-100 mx-10 mt-5">
       <h1 className="text-2xl font-bold mb-4 text-center">Daftar Peminjaman Anda</h1>
       {peminjaman.length === 0 ? (
         <p>Belum ada peminjaman untuk user ini.</p>
@@ -88,10 +92,22 @@ const PeminjamanList = ({ userId }) => {
                 <td className="py-2 px-4">{index + 1}</td>
                 <td className="py-2 px-4">{item.barang.name}</td> {/* Display the barang name */}
                 <td className="py-2 px-4">{item.keperluan}</td>
-                <td className="py-2 px-4">{new Date(item.startDate).toLocaleDateString()}</td>
-                <td className="py-2 px-4">{new Date(item.endDate).toLocaleDateString()}</td>
+                <td className="py-2 px-4 border-b">
+                  {new Date(item.startDate).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </td>
+                <td className="py-2 px-4 border-b">
+                  {new Date(item.endDate).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </td>
                 <td className="py-2 px-4">{item.status}</td>
-                <td className="py-2 px-4 pl-10">
+                <td className="py-2 px-4 translate-x-12">
                   {item.bukti_persetujuan ? (
                     <a href={`http://localhost:5000/uploads/${item.bukti_persetujuan}`} className="text-blue-500 underline" download>
                       <FontAwesomeIcon icon={faFile} />
@@ -112,6 +128,7 @@ const PeminjamanList = ({ userId }) => {
           </tbody>
         </table>
       )}
+      <ToastContainer autoClose={3000} />
     </div>
   );
 };

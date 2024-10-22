@@ -9,6 +9,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState({ name: "", role: "", email: "" }); // State to store user data
+  const [pendingCount, setPendingCount] = useState(0); // State untuk menyimpan jumlah peminjaman pending
 
   const router = useRouter(); // Use Next.js router for navigation
   const pathname = usePathname(); // Get current route for active menu highlighting
@@ -17,7 +18,20 @@ export function Navbar() {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
+  // Fetch jumlah peminjaman pending
   useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/peminjaman/count/pending");
+        const data = await response.json();
+        setPendingCount(data.pendingCount); // Set jumlah peminjaman pending
+      } catch (error) {
+        console.error("Error fetching pending count:", error);
+      }
+    };
+
+    fetchPendingCount(); // Panggil saat komponen pertama kali dirender
+
     // Fetch user data from localStorage (or any other storage method)
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
@@ -26,7 +40,7 @@ export function Navbar() {
       // If no user is found, redirect to login page
       router.push("/login");
     }
-  }, []);
+  }, [router]); // Include router in the dependency array
 
   // Logout function
   const handleLogout = () => {
@@ -54,9 +68,11 @@ export function Navbar() {
                 Data Barang
               </Link>
 
-              <Link href="/data-peminjaman" className={`${pathname === "/data-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
+              <Link href="/data-peminjaman" className={`${pathname === "/data-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center relative`}>
                 <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
                 Data Peminjaman
+                {/* Badge angka kecil merah untuk status pending */}
+                {pendingCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingCount}</span>}
               </Link>
 
               <Link href="/data-pengaduan" className={`${pathname === "/data-pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
@@ -65,7 +81,7 @@ export function Navbar() {
               </Link>
               <Link href="/data-pegawai" className={`${pathname === "/data-pegawai" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faUsers} className="mr-2" />
-                Data Pegawai
+                Data Pengguna
               </Link>
             </>
           ) : (

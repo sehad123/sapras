@@ -1,5 +1,5 @@
 const express = require("express");
-const { createPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman } = require("../services/peminjamanService");
+const { createPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman, rejectPeminjaman, countPendingPeminjaman } = require("../services/peminjamanService");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient(); // Inisialisasi Prisma di sini
@@ -79,6 +79,14 @@ router.put("/peminjaman/:id/approve", async (req, res) => {
     res.status(500).json({ error: "Failed to approve peminjaman" });
   }
 });
+router.put("/peminjaman/:id/reject", async (req, res) => {
+  try {
+    const peminjaman = await rejectPeminjaman(parseInt(req.params.id)); // Parse id di sini untuk efisiensi
+    res.json(peminjaman);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to approve peminjaman" });
+  }
+});
 
 // Backend route for handling "Kembalikan" action
 router.put("/peminjaman/:id/kembali", async (req, res) => {
@@ -96,6 +104,25 @@ router.get("/peminjaman/user/:userId", async (req, res) => {
     res.json(peminjaman);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch peminjaman" });
+  }
+});
+
+router.get("/peminjaman", async (req, res) => {
+  try {
+    const peminjamanList = await getAllPeminjaman();
+    res.status(200).json(peminjamanList);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route baru untuk menghitung jumlah peminjaman yang masih pending
+router.get("/peminjaman/count/pending", async (req, res) => {
+  try {
+    const pendingCount = await countPendingPeminjaman(); // Menggunakan service untuk menghitung peminjaman pending
+    res.status(200).json({ pendingCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count pending peminjaman" });
   }
 });
 
