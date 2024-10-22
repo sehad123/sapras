@@ -4,28 +4,52 @@ const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient(); // Inisialisasi Prisma di sini
 const router = express.Router();
+const multer = require("multer");
+const path = require("path");
 
-router.post("/peminjaman", async (req, res) => {
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Folder penyimpanan
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Nama file dengan timestamp
+  },
+});
+
+const upload = multer({ storage: storage });
+
+router.post("/peminjaman", upload.single("bukti_persetujuan"), async (req, res) => {
   const { userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan } = req.body;
 
+  // Ambil nama file dari req.file dan validasi file
+  const bukti_persetujuan = req.file ? req.file.filename : null;
+
+  console.log("Uploaded file:", req.file); // Logging untuk memastikan file diterima
+
   try {
-    // Fetch user once in the route
+    // Validasi userId
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Fetch user from the database
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: parseInt(userId, 10) }, // Pastikan userId adalah integer
       select: {
         name: true,
         role: true,
       },
     });
 
+    // Validasi user
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Pass all necessary data to the service, parsing barangId to integer
+    // Call the service to create a new peminjaman record
     const peminjaman = await createPeminjaman({
-      userId,
-      barangId: parseInt(barangId, 10), // Ensure barangId is parsed to an integer
+      userId: parseInt(userId, 10), // Pastikan userId adalah integer
+      barangId: parseInt(barangId, 10),
       startDate,
       endDate,
       startTime,
@@ -35,11 +59,15 @@ router.post("/peminjaman", async (req, res) => {
       nama_kegiatan,
       nama_peminjam: user.name,
       role_peminjam: user.role,
+      bukti_persetujuan, // Menggunakan nama variabel yang konsisten
     });
 
+    // Jika berhasil, kirimkan response
     res.status(201).json(peminjaman);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    // Logging error untuk debugging
+    console.error("Error in creating peminjaman:", error);
+    res.status(500).json({ error: "An error occurred while creating peminjaman" });
   }
 });
 

@@ -1,15 +1,15 @@
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
-const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan, nama_peminjam, role_peminjam }) => {
-  // Convert barangId to integer
+const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan, nama_peminjam, role_peminjam, bukti_persetujuan }) => {
+  // Pastikan barangId diubah menjadi integer
   const parsedBarangId = parseInt(barangId, 10);
 
-  // Membuat peminjaman
+  // Buat peminjaman baru dengan data yang diterima
   const peminjaman = await prisma.peminjaman.create({
     data: {
       userId,
-      barangId: parsedBarangId, // Ensure barangId is an integer
+      barangId: parsedBarangId,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       startTime,
@@ -20,6 +20,7 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTim
       nama_peminjam,
       role_peminjam,
       status: "PENDING",
+      bukti_persetujuan, // Simpan path file bukti persetujuan
     },
   });
 

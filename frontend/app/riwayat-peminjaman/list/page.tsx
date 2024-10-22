@@ -1,5 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import { faFile } from "@fortawesome/free-solid-svg-icons";
 
 const PeminjamanList = ({ userId }) => {
   const [peminjaman, setPeminjaman] = useState([]);
@@ -34,7 +37,7 @@ const PeminjamanList = ({ userId }) => {
   const handleReturn = async (peminjamanId) => {
     try {
       const response = await fetch(`http://localhost:5000/api/peminjaman/${peminjamanId}/kembali`, {
-        method: "PUT", // Changed to PUT to match the backend route
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -75,6 +78,7 @@ const PeminjamanList = ({ userId }) => {
               <th className="py-3 px-4 text-left">Tanggal Peminjaman</th>
               <th className="py-3 px-4 text-left">Tanggal Pengembalian</th>
               <th className="py-3 px-4 text-left">Status</th>
+              <th className="py-3 px-4 text-left">Bukti Persetujuan</th>
               <th className="py-3 px-4 text-left">Action</th>
             </tr>
           </thead>
@@ -87,6 +91,15 @@ const PeminjamanList = ({ userId }) => {
                 <td className="py-2 px-4">{new Date(item.startDate).toLocaleDateString()}</td>
                 <td className="py-2 px-4">{new Date(item.endDate).toLocaleDateString()}</td>
                 <td className="py-2 px-4">{item.status}</td>
+                <td className="py-2 px-4 pl-10">
+                  {item.bukti_persetujuan ? (
+                    <a href={`http://localhost:5000/uploads/${item.bukti_persetujuan}`} className="text-blue-500 underline" download>
+                      <FontAwesomeIcon icon={faFile} />
+                    </a>
+                  ) : (
+                    "No file"
+                  )}
+                </td>
                 <td className="py-2 px-4">
                   {item.status === "APPROVED" && (
                     <button className="bg-green-500 text-white py-1 px-4 rounded hover:bg-green-600 transition duration-200" onClick={() => handleReturn(item.id)}>

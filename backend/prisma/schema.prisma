@@ -53,6 +53,7 @@ model Peminjaman {
   barangId   Int
   keperluan  String?
   nama_kegiatan   String?
+  bukti_persetujuan String?          // Kolom untuk menyimpan URL atau path file bukti persetujuan
   startDate  DateTime
   endDate    DateTime
   startTime  String           // Kolom untuk waktu mulai (misalnya "17:20")

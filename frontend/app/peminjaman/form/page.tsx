@@ -1,18 +1,25 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
-const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
+const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
   const [kategori, setKategori] = useState([]);
   const [selectedKategori, setSelectedKategori] = useState("");
   const [barang, setBarang] = useState([]);
-  const [user, setUser] = useState({ name: "", role: "", email: "", id: "" }); // State to store user data
+  const [user, setUser] = useState({ name: "", role: "", email: "", id: "" });
+
   useEffect(() => {
-    // Fetch user data from localStorage (or any other storage method)
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
-      setUser(storedUser); // Set user data from storage
+      setUser(storedUser);
+      setFormData((prevData) => ({
+        ...prevData,
+        nama_peminjam: storedUser.name,
+        role_peminjam: storedUser.role,
+        userId: storedUser.id, // Set userId di formData
+      }));
     }
   }, []);
+
   const [formData, setFormData] = useState({
     keperluan: "",
     nama_kegiatan: "",
@@ -21,7 +28,8 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
     endDate: "",
     startTime: "",
     endTime: "",
-    nama_peminjam: "", // These will be updated when user data is set
+    bukti_persetujuan: "",
+    nama_peminjam: "",
     role_peminjam: "",
   });
 
@@ -31,19 +39,6 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
     startTime: "",
     endTime: "",
   });
-
-  // Fetch kategori options on component mount
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) {
-      setUser(storedUser);
-      setFormData((prevData) => ({
-        ...prevData,
-        nama_peminjam: storedUser.name,
-        role_peminjam: storedUser.role,
-      }));
-    }
-  }, []);
 
   useEffect(() => {
     const fetchKategori = async () => {
@@ -59,10 +54,9 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
     fetchKategori();
   }, []);
 
-  // Fetch barang based on selected kategori
   useEffect(() => {
-    const fetchBarang = async () => {
-      if (selectedKategori) {
+    if (selectedKategori) {
+      const fetchBarang = async () => {
         try {
           const response = await fetch(`http://localhost:5000/api/barangtersedia?kategoriId=${selectedKategori}`);
           const data = await response.json();
@@ -70,13 +64,12 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
         } catch (error) {
           console.error("Error fetching barang:", error);
         }
-      } else {
-        // Clear barang if no kategori is selected
-        setBarang([]);
-      }
-    };
+      };
 
-    fetchBarang();
+      fetchBarang();
+    } else {
+      setBarang([]);
+    }
   }, [selectedKategori]);
 
   const handleChange = (e) => {
@@ -90,6 +83,13 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
     validateInput(name, value);
   };
 
+  const handleFileChange = (e) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      bukti_persetujuan: e.target.files[0], // Get the selected file
+    }));
+  };
+
   const validateInput = (name, value) => {
     let errors = { ...validationErrors };
     const today = new Date();
@@ -98,7 +98,7 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
       const startDate = new Date(value);
       if (startDate < today) {
         errors.startDate = "Tanggal peminjaman tidak bisa sebelum hari ini.";
-      } else if (startDate == today) {
+      } else if (startDate.toDateString() === today.toDateString()) {
         errors.startDate = "Tanggal peminjaman tidak bisa hari ini. maksimal H-1";
       } else {
         errors.startDate = ""; // Clear error if valid
@@ -142,14 +142,15 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
 
     if (Object.values(validationErrors).some((error) => error)) {
       return; // Exit if there are validation errors
     }
 
-    // Call the passed onSubmit function instead of handling submission here
-    onSubmit(formData, user);
+    // Pastikan formData sudah mengandung userId yang diambil dari localStorage
+    await onSubmit(formData); // Kirim formData dengan userId
+    onClose(); // Close the modal after submission
   };
 
   if (!isOpen) return null;
@@ -157,17 +158,16 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
-        {/* Close modal icon */}
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-red-500">
+        <button onClick={onClose} className="absolute top-8 right-2 text-gray-500 hover:text-red-500">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <h2 className="text-2xl font-bold mb-2 text-center">Form Peminjaman</h2>
+        <h2 className="text-2xl font-bold mb-1 text-center">Form Peminjaman</h2>
         <form onSubmit={handleSubmit}>
-          {/* Select Keperluan */}
-          <div className="mb-2">
+          {/* Existing form fields */}
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Keperluan:</label>
             <select name="keperluan" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.keperluan} onChange={handleChange} required>
               <option value="">Pilih Keperluan</option>
@@ -176,13 +176,12 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
             </select>
           </div>
 
-          <div className="mb-2">
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Nama Kegiatan</label>
             <input type="text" name="nama_kegiatan" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.nama_kegiatan} onChange={handleChange} required />
           </div>
 
-          {/* Select Kategori */}
-          <div className="mb-2">
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Kategori:</label>
             <select className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={selectedKategori} onChange={(e) => setSelectedKategori(e.target.value)} required>
               <option value="">Pilih Kategori</option>
@@ -194,17 +193,9 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
             </select>
           </div>
 
-          {/* Select Barang */}
-          <div className="mb-2">
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Barang:</label>
-            <select
-              name="barangId"
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-              value={formData.barangId}
-              onChange={handleChange}
-              required
-              disabled={!selectedKategori} // Disable if no kategori is selected
-            >
+            <select name="barangId" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.barangId} onChange={handleChange} required disabled={!selectedKategori}>
               <option value="">Pilih Barang</option>
               {barang.map((item) => (
                 <option key={item.id} value={item.id}>
@@ -214,37 +205,44 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit }) => {
             </select>
           </div>
 
-          {/* Date and Time fields */}
-          <div className="mb-2">
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Tanggal Peminjaman:</label>
             <input type="date" name="startDate" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.startDate} onChange={handleChange} required />
             {validationErrors.startDate && <p className="text-red-500 text-xs">{validationErrors.startDate}</p>}
           </div>
 
-          <div className="mb-2">
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Tanggal Pengembalian:</label>
             <input type="date" name="endDate" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.endDate} onChange={handleChange} required />
             {validationErrors.endDate && <p className="text-red-500 text-xs">{validationErrors.endDate}</p>}
           </div>
 
-          <div className="mb-2">
+          <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Waktu Mulai:</label>
             <input type="time" name="startTime" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.startTime} onChange={handleChange} required />
             {validationErrors.startTime && <p className="text-red-500 text-xs">{validationErrors.startTime}</p>}
           </div>
 
-          <div className="mb-2">
-            <label className="block text-sm font-medium text-gray-700">Waktu Berakhir:</label>
+          <div className="mb-1">
+            <label className="block text-sm font-medium text-gray-700">Waktu Selesai:</label>
             <input type="time" name="endTime" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.endTime} onChange={handleChange} required />
             {validationErrors.endTime && <p className="text-red-500 text-xs">{validationErrors.endTime}</p>}
           </div>
 
-          <button type="submit" className="mt-4 w-full bg-blue-600 text-white rounded-md p-2 hover:bg-blue-700">
-            Ajukan Peminjaman
-          </button>
-        </form>
+          <div className="mb-1">
+            <label className="block text-sm font-medium text-gray-700">Bukti Persetujuan:</label>
+            <input type="file" className="mt-1 block w-full border border-gray-300 rounded-md p-2" onChange={onFileChange} required />
+          </div>
 
-        {/* Toast container to display notifications */}
+          <div className="flex justify-end">
+            <button type="button" className="mr-2 bg-gray-300 text-gray-700 py-1 px-4 rounded-md" onClick={onClose}>
+              Batal
+            </button>
+            <button type="submit" className="bg-blue-500 text-white py-1 px-4 rounded-md">
+              Kirim
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
