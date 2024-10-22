@@ -1,7 +1,16 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const createPeminjaman = async ({ userId, barangId, startDate, endDate }) => {
+const createPeminjaman = async ({
+  userId,
+  barangId,
+  startDate,
+  endDate,
+  startTime, // Tambahkan startTime
+  endTime, // Tambahkan endTime
+  keperluan,
+  kategori,
+}) => {
   const barang = await prisma.barang.findUnique({ where: { id: barangId } });
   if (!barang || !barang.available) {
     throw new Error("Barang tidak tersedia");
@@ -13,6 +22,10 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate }) => {
       barangId,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
+      startTime, // Simpan startTime
+      endTime, // Simpan endTime
+      keperluan,
+      kategori,
       status: "PENDING",
     },
   });

@@ -9,12 +9,12 @@ router.post(
   "/barang/add",
   upload.single("photo"),
   asyncHandler(async (req, res) => {
-    const { name, type, lokasi, kondisi, available } = req.body;
+    const { name, kategoriId, lokasi, kondisi, available } = req.body; // Ensure `kategoriId` is included
     const photoPath = req.file ? `/uploads/${req.file.filename}` : null; // Prefix with "/uploads/"
 
     const barang = await addBarang({
       name,
-      type,
+      kategoriId: parseInt(kategoriId), // Convert to integer
       lokasi,
       kondisi,
       photo: photoPath, // Store relative URL for the image
@@ -50,12 +50,12 @@ router.patch(
   "/barang/:id",
   upload.single("photo"),
   asyncHandler(async (req, res) => {
-    const { name, type, lokasi, kondisi, available } = req.body;
+    const { name, kategoriId, lokasi, kondisi, available } = req.body; // Ensure `kategoriId` is included
     const photoPath = req.file ? `/uploads/${req.file.filename}` : null;
 
     const updatedData = {};
     if (name) updatedData.name = name;
-    if (type) updatedData.type = type;
+    if (kategoriId) updatedData.kategoriId = parseInt(kategoriId); // Convert to integer
     if (lokasi) updatedData.lokasi = lokasi;
     if (kondisi) updatedData.kondisi = kondisi;
     if (available) updatedData.available = available;

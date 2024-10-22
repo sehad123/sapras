@@ -1,28 +1,18 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+export default function DeleteConfirmationModal({ show, onClose, onConfirm }) {
+  if (!show) return null;
 
-export default function DeleteConfirmationModal({ barang, onClose, onDelete }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg w-full max-w-sm">
-        {/* Modal Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Confirm Delete</h2>
-          <button onClick={onClose}>
-            <FontAwesomeIcon icon={faTimes} size="lg" />
-          </button>
-        </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">
+      <div className="bg-white p-6 rounded shadow-md">
+        <h2 className="text-xl mb-4">Konfirmasi Penghapusan</h2>
 
-        {/* Modal Body */}
-        <p>Are you sure you want to delete {barang.name}?</p>
-
-        {/* Modal Footer */}
-        <div className="mt-6 flex justify-end space-x-3">
-          <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
-            Cancel
+        <p>Apakah Anda yakin ingin menghapus barang ini?</p>
+        <div className="mt-6 flex justify-end space-x-4">
+          <button className="bg-gray-300 px-4 py-2 rounded" onClick={onClose}>
+            Batal
           </button>
-          <button onClick={onDelete} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
-            Delete
+          <button className="bg-red-500 text-white px-4 py-2 rounded" onClick={onConfirm}>
+            Hapus
           </button>
         </div>
       </div>

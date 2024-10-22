@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 export default function BarangList() {
   const [barangList, setBarangList] = useState([]);
   const [filteredBarangList, setFilteredBarangList] = useState([]);
+  const [categories, setCategories] = useState([]); // Store categories
   const [error, setError] = useState(null);
   const [editingBarang, setEditingBarang] = useState(null);
   const [deletingBarang, setDeletingBarang] = useState(null);
@@ -23,19 +24,28 @@ export default function BarangList() {
   const [currentPage, setCurrentPage] = useState(1); // Pagination state
   const itemsPerPage = 5; // Items per page
 
+  // Fetch barang and categories data
   useEffect(() => {
     const fetchBarangList = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/barang");
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
+        const [barangRes, categoriesRes] = await Promise.all([
+          fetch("http://localhost:5000/api/barang"),
+          fetch("http://localhost:5000/api/kategori"), // Fetch categories
+        ]);
+
+        if (!barangRes.ok || !categoriesRes.ok) {
+          throw new Error("HTTP error!");
         }
-        const data = await res.json();
-        setBarangList(data);
-        setFilteredBarangList(data);
+
+        const barangData = await barangRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        setBarangList(barangData);
+        setFilteredBarangList(barangData);
+        setCategories(categoriesData); // Set categories data
       } catch (error) {
-        console.error("Error fetching barang:", error.message);
-        setError("Failed to fetch barang. Please try again later.");
+        console.error("Error fetching barang or categories:", error.message);
+        setError("Failed to fetch data. Please try again later.");
       }
     };
 
@@ -49,7 +59,7 @@ export default function BarangList() {
       .filter((barang) => barang.lokasi.toLowerCase().includes(searchLokasi.toLowerCase()))
       .filter((barang) => barang.kondisi.toLowerCase().includes(searchKondisi.toLowerCase()))
       .filter((barang) => (availabilityFilter ? barang.available === availabilityFilter : true))
-      .filter((barang) => (categoryFilter ? barang.type === categoryFilter : true));
+      .filter((barang) => (categoryFilter ? barang.kategoriId === parseInt(categoryFilter) : true));
     setFilteredBarangList(filteredList);
     setCurrentPage(1); // Reset to first page after filtering
   }, [searchName, searchKondisi, searchLokasi, availabilityFilter, categoryFilter, barangList]);
@@ -58,6 +68,12 @@ export default function BarangList() {
   const lastIndex = currentPage * itemsPerPage;
   const firstIndex = lastIndex - itemsPerPage;
   const paginatedBarangList = filteredBarangList.slice(firstIndex, lastIndex);
+
+  // Get category name by ID
+  const getCategoryName = (categoryId) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.kategori : "Unknown"; // Fallback if category is not found
+  };
 
   const handleAddBarang = () => setAddingBarang(true);
   const handleCloseAddModal = () => setAddingBarang(false);
@@ -104,15 +120,16 @@ export default function BarangList() {
     }
   };
 
-  const handleDeleteBarang = async (barangId) => {
+  const handleConfirmDelete = async () => {
+    if (!deletingBarang) return;
+
     try {
-      const res = await fetch(`http://localhost:5000/api/barang/${barangId}`, {
+      const res = await fetch(`http://localhost:5000/api/barang/${deletingBarang.id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        setBarangList((prevBarangList) => prevBarangList.filter((barang) => barang.id !== barangId));
-        setDeletingBarang(null);
+        setBarangList((prevBarangList) => prevBarangList.filter((barang) => barang.id !== deletingBarang.id));
         toast.success("Penghapusan Barang berhasil!");
       } else {
         toast.error("Penghapusan Barang gagal, coba lagi.");
@@ -120,12 +137,10 @@ export default function BarangList() {
     } catch (error) {
       console.error("Error deleting barang:", error.message);
       setError("Error deleting barang.");
+    } finally {
+      setDeletingBarang(null); // Close the delete modal
     }
   };
-
-  // Handle pagination navigation
-  const totalPages = Math.ceil(filteredBarangList.length / itemsPerPage);
-
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -138,7 +153,6 @@ export default function BarangList() {
     }
   };
 
-  // Reset filter
   const handleResetFilter = () => {
     setSearchName("");
     setSearchKondisi("");
@@ -147,6 +161,8 @@ export default function BarangList() {
     setCategoryFilter("");
     setFilteredBarangList(barangList); // Reset to full list
   };
+
+  const totalPages = Math.ceil(filteredBarangList.length / itemsPerPage);
 
   return (
     <div className="container mx-auto p-4">
@@ -174,83 +190,79 @@ export default function BarangList() {
             <option value="Tidak">Tidak</option>
           </select>
 
+          {/* Update category filter to use category names */}
           <select className="p-2 border rounded-md mb-2 md:mb-0 md:mr-4" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
             <option value="">Semua Kategori</option>
-            <option value="Barang">Barang</option>
-            <option value="Ruangan">Ruangan</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.kategori}
+              </option>
+            ))}
           </select>
-
-          <button onClick={handleResetFilter} className="bg-red-500 text-white p-2 rounded-md">
+          <button className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition duration-200" onClick={handleResetFilter}>
             Reset Filter
           </button>
         </div>
 
-        {/* Table */}
-        <table className="w-full table-auto bg-gray-100 border-collapse -translate-y-10">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-300 px-6 py-3 text-left">No</th>
-              <th className="border border-gray-300 px-6 py-3 text-left">Nama</th>
-              <th className="border border-gray-300 px-6 py-3 text-left">Kategori</th>
-              <th className="border border-gray-300 px-6 py-3 text-left">Kondisi</th>
-              <th className="border border-gray-300 px-6 py-3 text-left">Lokasi</th>
-              <th className="border border-gray-300 px-6 py-3 text-left">Photo</th>
-              <th className="border border-gray-300 px-6 py-3 text-left">Tersedia</th>
-              <th className="border border-gray-300 px-6 py-3 text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedBarangList.length > 0 ? (
-              paginatedBarangList.map((barang, index) => (
-                <tr key={barang.id} className="hover:bg-gray-100">
-                  <td className="border px-6 py-3">{firstIndex + index + 1}</td>
-                  <td className="border px-6 py-3">{barang.name}</td>
-                  <td className="border px-6 py-3">{barang.type}</td>
-                  <td className="border px-6 py-3">{barang.kondisi}</td>
-                  <td className="border px-6 py-3">{barang.lokasi}</td>
-                  <td className="border border-gray-300 px-6 py-3">{barang.photo ? <img src={`http://localhost:5000${barang.photo}`} alt={barang.name} className="w-20 h-20 object-cover" /> : "No Image"}</td>
-                  <td className="border px-6 py-3">{barang.available}</td>
-                  <td className="border px-6 py-3 text-center">
-                    <div className="flex justify-center space-x-2">
-                      <button onClick={() => setEditingBarang(barang)}>
-                        <FontAwesomeIcon icon={faEdit} className="text-blue-500" />
-                      </button>
-                      <button onClick={() => setDeletingBarang(barang)}>
-                        <FontAwesomeIcon icon={faTrash} className="text-red-500" />
-                      </button>
-                    </div>
+        <div className="overflow-x-auto -translate-y-10">
+          <table className="table-auto w-full">
+            <thead>
+              <tr>
+                <th className="border px-4 py-2">Nama Barang</th>
+                <th className="border px-4 py-2">Foto</th>
+                <th className="border px-4 py-2">Kondisi</th>
+                <th className="border px-4 py-2">Lokasi</th>
+                <th className="border px-4 py-2">Kategori</th>
+                <th className="border px-4 py-2">Tersedia</th>
+                <th className="border px-4 py-2">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedBarangList.map((barang) => (
+                <tr key={barang.id}>
+                  <td className="border px-4 py-2">{barang.name}</td>
+                  <td className="border border-gray-300 px-6 py-3">{barang.photo ? <img src={`http://localhost:5000${barang.photo}`} alt={barang.name} className="mx-auto w-20 h-20 object-cover" /> : "No Image"}</td>
+                  <td className="border px-4 py-2">{barang.kondisi}</td>
+                  <td className="border px-4 py-2">{barang.lokasi}</td>
+                  {/* Replace kategoriId with category name */}
+                  <td className="border px-4 py-2">{getCategoryName(barang.kategoriId)}</td>
+                  <td className="border px-4 py-2">{barang.available}</td>
+                  <td className="border px-4 py-2 flex items-center space-x-2 justify-center">
+                    <button className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600 transition duration-200" onClick={() => setEditingBarang(barang)}>
+                      <FontAwesomeIcon icon={faEdit} />
+                    </button>
+                    <button className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition duration-200" onClick={() => setDeletingBarang(barang)}>
+                      <FontAwesomeIcon icon={faTrash} />
+                    </button>
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="8" className="text-center p-4">
-                  Tidak ada barang ditemukan.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Pagination */}
-        <div className="flex justify-center mt-4">
-          <button onClick={handlePreviousPage} disabled={currentPage === 1} className={`p-2 px-4 mx-2 bg-gray-200 rounded-md ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}>
+        {/* Pagination controls */}
+        <div className="flex justify-between items-center mt-4">
+          <button className={`bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-200 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`} onClick={handlePreviousPage} disabled={currentPage === 1}>
             Previous
           </button>
-
-          <span className="p-2 px-4">
+          <span className="text-gray-700">
             Page {currentPage} of {totalPages}
           </span>
-
-          <button onClick={handleNextPage} disabled={currentPage === totalPages} className={`p-2 px-4 mx-2 bg-gray-200 rounded-md ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}>
+          <button
+            className={`bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-200 ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
             Next
           </button>
         </div>
       </div>
 
+      {/* Modals for adding, editing, and deleting */}
       {addingBarang && <AddBarangModal onSave={handleSaveBarang} onClose={handleCloseAddModal} />}
       {editingBarang && <EditBarangModal barang={editingBarang} onSave={handleSaveEditBarang} onClose={() => setEditingBarang(null)} />}
-      {deletingBarang && <DeleteConfirmationModal barang={deletingBarang} onConfirmDelete={() => handleDeleteBarang(deletingBarang.id)} onClose={() => setDeletingBarang(null)} />}
+      {deletingBarang && <DeleteConfirmationModal show={!!deletingBarang} onClose={() => setDeletingBarang(null)} onConfirm={handleConfirmDelete} />}
     </div>
   );
 }

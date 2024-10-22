@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 // prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
@@ -15,37 +9,68 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
   name       String
-  email      String   @unique
+  email      String     @unique
   password   String
-  role       String   // "ADMIN", "PEGAWAI", "SUPERADMIN"
-  createdAt  DateTime @default(now())
+  role       String     // "ADMIN", "PEGAWAI", "SUPERADMIN"
+  createdAt  DateTime   @default(now())
   peminjaman Peminjaman[]
+  pengaduan  Pengaduan[]
 }
 
 model Barang {
-  id         Int      @id @default(autoincrement())
+  id         Int              @id @default(autoincrement())
   name       String
-  type       String?  // Jenis barang
+  kategoriId Int              // Jenis barang
   kondisi    String?
-  available  String?  
+  available   String?    // Ubah ke String jika ingin menggunakan "Ya" atau "Tidak"
   lokasi     String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime         @default(now())
   peminjaman Peminjaman[]
-  photo      String?  // New field for storing the photo URL
+  photo      String?          // Field untuk menyimpan URL foto
+  kategori   KategoriBarang   @relation(fields: [kategoriId], references: [id])
+}
+
+model KategoriBarang {
+  id       Int      @id @default(autoincrement())
+  kategori String?
+  barang   Barang[] // Relasi ke model Barang
+}
+
+model KategoriPengaduan {
+  id       Int      @id @default(autoincrement())
+  kategori String?
+  pengaduan Pengaduan[] // Relasi ke model Pengaduan
 }
 
 model Peminjaman {
+  id         Int              @id @default(autoincrement())
+  userId     Int
+  barangId   Int
+  keperluan  String?
+  startDate  DateTime
+  endDate    DateTime
+  startTime  String           // Kolom untuk waktu mulai (misalnya "17:20")
+  endTime    String           // Kolom untuk waktu selesai (misalnya "17:20")
+  status     StatusPeminjaman @default(PENDING)
+  createdAt  DateTime         @default(now())
+  user       User             @relation(fields: [userId], references: [id])
+  barang     Barang           @relation(fields: [barangId], references: [id])
+}
+
+model Pengaduan {
   id             Int              @id @default(autoincrement())
   userId         Int
-  barangId       Int
-  startDate      DateTime
-  endDate        DateTime
-  status         StatusPeminjaman @default(PENDING)
+  kategoriId     Int
+  date           DateTime         @default(now()) // Default ke tanggal saat ini
+  jam            String           // Kolom untuk menunjukkan jam saat ini (misalnya "17:20")
+  photo          String?          // Field untuk menyimpan URL foto
+  deskripsi      String?
+  status         StatusPengaduan  @default(PENDING)
   createdAt      DateTime         @default(now())
   user           User             @relation(fields: [userId], references: [id])
-  barang         Barang           @relation(fields: [barangId], references: [id])
+  kategori       KategoriPengaduan @relation(fields: [kategoriId], references: [id])
 }
 
 enum StatusPeminjaman {
@@ -54,4 +79,11 @@ enum StatusPeminjaman {
   REJECTED
   DIPINJAM
   DIKEMBALIKAN
+}
+
+enum StatusPengaduan {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
 }

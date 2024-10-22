@@ -1,15 +1,31 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function AddBarangModal({ onClose, onSave }) {
   const [newBarang, setNewBarang] = useState({
     name: "",
-    type: "",
+    kategoriId: "", // Mengubah type menjadi kategoriId
     kondisi: "",
     lokasi: "",
     available: "",
     photo: null, // Add a new field for photo
   });
+
+  const [kategoriList, setKategoriList] = useState([]); // State untuk kategori
+
+  useEffect(() => {
+    const fetchKategori = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/kategori"); // Ganti dengan endpoint yang sesuai
+        const data = await response.json();
+        setKategoriList(data); // Simpan data kategori di state
+      } catch (error) {
+        console.error("Failed to fetch kategori:", error);
+      }
+    };
+
+    fetchKategori();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,12 +51,15 @@ export default function AddBarangModal({ onClose, onSave }) {
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-xl font-bold mb-4">Tambah Barang</h2>
         <label className="block mb-2">Kategori</label>
-        <select name="type" value={newBarang.type} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded">
+        <select name="kategoriId" value={newBarang.kategoriId} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded">
           <option value="" disabled>
             Pilih Kategori
           </option>
-          <option value="Barang">Barang</option>
-          <option value="Ruangan">Ruangan</option>
+          {kategoriList.map((kategori) => (
+            <option key={kategori.id} value={kategori.id}>
+              {kategori.kategori}
+            </option>
+          ))}
         </select>
         <div className="mb-4 mt-2">
           <label className="block mb-2">Nama</label>
@@ -56,7 +75,6 @@ export default function AddBarangModal({ onClose, onSave }) {
           <input type="text" name="lokasi" value={newBarang.lokasi} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded" />
         </div>
         <div className="mb-4">
-          {/* <label className="block mb-2">Tersedia</label> */}
           <select name="available" value={newBarang.available} onChange={handleInputChange} className="w-full p-2 border border-gray-300 rounded">
             <option value="" disabled>
               Pilih Ketersediaan

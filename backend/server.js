@@ -5,6 +5,8 @@ const path = require("path"); // Perlu untuk mengatur path
 const userRoutes = require("./routes/userRoutes");
 const barangRoutes = require("./routes/barangRoutes");
 const peminjamanRoutes = require("./routes/peminjamanRoutes");
+const pengaduanRoutes = require("./routes/pengaduanRoutes"); // Tambahkan pengaduanRoutes
+const kategoriBarangRoutes = require("./routes/kategoriBarangRoutes");
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api", userRoutes);
 app.use("/api", barangRoutes);
 app.use("/api", peminjamanRoutes);
+app.use("/api", pengaduanRoutes); // Tambahkan route pengaduan
+app.use("/api", kategoriBarangRoutes); // Tambahkan route pengaduan
 
 // Server listening
 app.listen(5000, () => {

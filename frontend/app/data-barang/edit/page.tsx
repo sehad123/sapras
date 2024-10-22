@@ -1,41 +1,54 @@
-"use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 // Modal Component for Editing Barang
 export default function EditBarangModal({ barang, onClose, onSave }) {
   const [name, setName] = useState(barang.name);
-  const [type, setType] = useState(barang.type || ""); // Optional field
-  const [kondisi, setKondisi] = useState(barang.kondisi || ""); // Optional field
+  const [kategoriId, setKategoriId] = useState(barang.kategoriId || ""); // Menyimpan ID kategori yang dipilih
+  const [kondisi, setKondisi] = useState(barang.kondisi || "");
   const [available, setAvailable] = useState(barang.available);
-  const [lokasi, setLokasi] = useState(barang.lokasi || ""); // Optional field
-  const [photo, setPhoto] = useState(null); // Updated: use state for file
+  const [lokasi, setLokasi] = useState(barang.lokasi || "");
+  const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [kategoriList, setKategoriList] = useState([]); // Menyimpan daftar kategori
+
+  // Mengambil data kategori dari API
+  useEffect(() => {
+    const fetchKategori = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/kategori");
+        const data = await response.json();
+        setKategoriList(data);
+      } catch (error) {
+        console.error("Error fetching kategori:", error);
+      }
+    };
+
+    fetchKategori();
+  }, []);
 
   const handleSave = async () => {
     setLoading(true);
 
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("type", type);
+    formData.append("kategoriId", kategoriId);
     formData.append("kondisi", kondisi);
     formData.append("available", available);
     formData.append("lokasi", lokasi);
 
-    // Append the photo file if selected
     if (photo) {
       formData.append("photo", photo);
     }
 
-    await onSave(barang.id, formData); // Pass FormData to onSave
+    await onSave(barang.id, formData);
     setLoading(false);
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="bg-white rounded-lg p-6 shadow-lg w-full max-w-lg">
-        {/* Modal Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Edit Barang</h2>
           <button onClick={onClose}>
@@ -43,7 +56,6 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium">Name</label>
@@ -52,10 +64,15 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
 
           <div>
             <label className="block text-sm font-medium">Kategori</label>
-            {/* <input type="text" value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" /> */}
-            <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500">
-              <option value="Barang">Barang</option>
-              <option value="Ruangan">Ruangan</option>
+            <select value={kategoriId} onChange={(e) => setKategoriId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500">
+              <option value="" disabled>
+                Pilih Kategori
+              </option>
+              {kategoriList.map((kategori) => (
+                <option key={kategori.id} value={kategori.id}>
+                  {kategori.kategori}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -83,7 +100,6 @@ export default function EditBarangModal({ barang, onClose, onSave }) {
           </div>
         </div>
 
-        {/* Modal Footer */}
         <div className="mt-6 flex justify-end space-x-3">
           <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
             Cancel

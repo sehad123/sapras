@@ -1,11 +1,31 @@
 const express = require("express");
 const { createPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman } = require("../services/peminjamanService");
+
 const router = express.Router();
 
 router.post("/peminjaman", async (req, res) => {
-  const { userId, barangId, startDate, endDate } = req.body;
+  const {
+    userId,
+    barangId,
+    startDate,
+    endDate,
+    startTime, // Tambahkan startTime
+    endTime, // Tambahkan endTime
+    keperluan,
+    kategori,
+  } = req.body;
+
   try {
-    const peminjaman = await createPeminjaman({ userId, barangId, startDate, endDate });
+    const peminjaman = await createPeminjaman({
+      userId,
+      barangId,
+      startDate,
+      endDate,
+      startTime, // Kirim startTime ke service
+      endTime, // Kirim endTime ke service
+      keperluan,
+      kategori,
+    });
     res.json(peminjaman);
   } catch (error) {
     res.status(500).json({ error: error.message });
