@@ -22,6 +22,21 @@ const getAllBarang = async () =>
     include: { kategori: true }, // Include kategori for more detailed response
   });
 
+const getAvailableBarang = async (kategoriId) => {
+  const filter = {
+    available: "Ya", // Filter for available barang
+  };
+
+  // If kategoriId is provided, add it to the filter
+  if (kategoriId) {
+    filter.kategoriId = parseInt(kategoriId);
+  }
+
+  return prisma.barang.findMany({
+    where: filter,
+    include: { kategori: true }, // Include kategori for more detailed response
+  });
+};
 // Read a single barang by ID
 const getBarangById = async (id) =>
   prisma.barang.findUnique({
@@ -42,4 +57,4 @@ const deleteBarang = async (id) =>
     where: { id: parseInt(id) },
   });
 
-module.exports = { addBarang, getAllBarang, getBarangById, updateBarang, deleteBarang };
+module.exports = { addBarang, getAvailableBarang, getAllBarang, getBarangById, updateBarang, deleteBarang };

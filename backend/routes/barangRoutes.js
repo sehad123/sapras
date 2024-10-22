@@ -1,5 +1,5 @@
 const express = require("express");
-const { addBarang, getAllBarang, getBarangById, updateBarang, deleteBarang } = require("../services/barangService");
+const { addBarang, getAllBarang, getAvailableBarang, getBarangById, updateBarang, deleteBarang } = require("../services/barangService");
 const upload = require("../utils/multerSetup"); // Import multer setup
 const router = express.Router();
 const asyncHandler = require("express-async-handler"); // For async error handling
@@ -29,6 +29,15 @@ router.get(
   "/barang",
   asyncHandler(async (req, res) => {
     const barang = await getAllBarang();
+    res.json(barang);
+  })
+);
+
+router.get(
+  "/barangtersedia",
+  asyncHandler(async (req, res) => {
+    const kategoriId = req.query.kategoriId; // Get kategoriId from query parameters
+    const barang = await getAvailableBarang(kategoriId); // Pass kategoriId to the function
     res.json(barang);
   })
 );

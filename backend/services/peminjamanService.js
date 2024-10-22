@@ -1,69 +1,80 @@
 const { PrismaClient } = require("@prisma/client");
+
 const prisma = new PrismaClient();
+const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan, nama_peminjam, role_peminjam }) => {
+  // Convert barangId to integer
+  const parsedBarangId = parseInt(barangId, 10);
 
-const createPeminjaman = async ({
-  userId,
-  barangId,
-  startDate,
-  endDate,
-  startTime, // Tambahkan startTime
-  endTime, // Tambahkan endTime
-  keperluan,
-  kategori,
-}) => {
-  const barang = await prisma.barang.findUnique({ where: { id: barangId } });
-  if (!barang || !barang.available) {
-    throw new Error("Barang tidak tersedia");
-  }
-
+  // Membuat peminjaman
   const peminjaman = await prisma.peminjaman.create({
     data: {
       userId,
-      barangId,
+      barangId: parsedBarangId, // Ensure barangId is an integer
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      startTime, // Simpan startTime
-      endTime, // Simpan endTime
+      startTime,
+      endTime,
       keperluan,
       kategori,
+      nama_kegiatan,
+      nama_peminjam,
+      role_peminjam,
       status: "PENDING",
     },
-  });
-
-  await prisma.barang.update({
-    where: { id: barangId },
-    data: { available: false },
   });
 
   return peminjaman;
 };
 
 const approvePeminjaman = async (id) => {
-  return await prisma.peminjaman.update({
-    where: { id: parseInt(id) },
+  const peminjaman = await prisma.peminjaman.update({
+    where: { id },
     data: { status: "APPROVED" },
   });
+
+  if (!peminjaman) {
+    throw new Error("Peminjaman tidak ditemukan");
+  }
+
+  return peminjaman;
 };
 
 const returnBarang = async (id) => {
   const peminjaman = await prisma.peminjaman.update({
-    where: { id: parseInt(id) },
+    where: { id },
     data: { status: "DIKEMBALIKAN" },
   });
 
+  if (!peminjaman) {
+    throw new Error("Peminjaman tidak ditemukan");
+  }
+
+  // Update barang setelah dikembalikan
   await prisma.barang.update({
     where: { id: peminjaman.barangId },
-    data: { available: true },
+    data: { available: "Ya" },
   });
 
   return peminjaman;
 };
 
+// Example query in your service to fetch peminjaman with the associated barang name
 const trackPeminjaman = async (userId) => {
-  return await prisma.peminjaman.findMany({
-    where: { userId: parseInt(userId) },
-    include: { barang: true },
+  const peminjaman = await prisma.peminjaman.findMany({
+    where: { userId },
+    include: {
+      barang: {
+        // Include related barang data
+        select: { name: true }, // Select only the 'name' field from barang
+      },
+    },
   });
+
+  if (!peminjaman.length) {
+    throw new Error("Peminjaman tidak ditemukan untuk user ini");
+  }
+
+  return peminjaman;
 };
 
 module.exports = { createPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman };
