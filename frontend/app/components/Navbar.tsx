@@ -2,67 +2,70 @@
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDashboard, faTable, faUsers, faClipboardList, faUserCircle, faHandHolding, faExclamationTriangle, faHistory } from "@fortawesome/free-solid-svg-icons";
-import Link from "next/link"; // Import Link from Next.js
-import { usePathname, useRouter } from "next/navigation"; // Use both useRouter and usePathname for routing and checking current route
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [user, setUser] = useState({ name: "", role: "", email: "" }); // State to store user data
-  const [pendingCount, setPendingCount] = useState(0); // State untuk menyimpan jumlah peminjaman pending
+  const [user, setUser] = useState({ name: "", role: "", email: "", id: "" });
+  const [pendingCount, setPendingCount] = useState(0);
+  const [approvedCount, setApprovedCount] = useState(0); // State for approved count
+  const [rejectedCount, setRejectedCount] = useState(0); // State for rejected count
 
-  const router = useRouter(); // Use Next.js router for navigation
-  const pathname = usePathname(); // Get current route for active menu highlighting
+  const router = useRouter();
+  const pathname = usePathname();
 
   const toggleUserMenu = () => {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
-  // Fetch jumlah peminjaman pending
+  // Fetch counts for pending, approved, and rejected peminjaman
   useEffect(() => {
-    const fetchPendingCount = async () => {
+    const fetchCounts = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/peminjaman/count/pending");
-        const data = await response.json();
-        setPendingCount(data.pendingCount); // Set jumlah peminjaman pending
+        const pendingResponse = await fetch("http://localhost:5000/api/peminjaman/count/pending");
+        const pendingData = await pendingResponse.json();
+        setPendingCount(pendingData.pendingCount);
+
+        const approvedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/approved/${user.id}`);
+        const approvedData = await approvedResponse.json();
+        setApprovedCount(approvedData.approvedCount); // Set approved count
+
+        const rejectedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/rejected/${user.id}`);
+        const rejectedData = await rejectedResponse.json();
+        setRejectedCount(rejectedData.rejectedCount); // Set rejected count
       } catch (error) {
-        console.error("Error fetching pending count:", error);
+        console.error("Error fetching counts:", error);
       }
     };
 
-    fetchPendingCount(); // Panggil saat komponen pertama kali dirender
+    fetchCounts(); // Call when the component first mounts
 
-    // Fetch user data from localStorage (or any other storage method)
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
-      setUser(storedUser); // Set user data from storage
+      setUser(storedUser);
     } else {
-      // If no user is found, redirect to login page
       router.push("/login");
     }
-  }, [router]); // Include router in the dependency array
+  }, [router]);
 
-  // Logout function
   const handleLogout = () => {
-    // Clear user data from storage
     localStorage.removeItem("user");
-    // Redirect to the login page
     router.push("/login");
   };
 
   return (
     <div className="bg-gray-100 h-[100px]">
       <header className="flex justify-between items-center p-4 bg-gray-900">
-        {/* HALO BAU - clickable and redirects to home */}
         <div onClick={() => router.push("/")} className="text-white font-bold text-lg cursor-pointer hover:text-gray-300">
           HALO BAU
         </div>
 
-        {/* Navigation Menu */}
         <nav className="flex space-x-6">
           {user.role === "Admin" ? (
             <>
-              {/* Admin-only menus */}
+              {/* Admin menus */}
               <Link href="/data-barang" className={`${pathname === "/data-barang" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faTable} className="mr-2" />
                 Data Barang
@@ -71,7 +74,6 @@ export function Navbar() {
               <Link href="/data-peminjaman" className={`${pathname === "/data-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center relative`}>
                 <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
                 Data Peminjaman
-                {/* Badge angka kecil merah untuk status pending */}
                 {pendingCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingCount}</span>}
               </Link>
 
@@ -100,6 +102,9 @@ export function Navbar() {
               <Link href="/riwayat-peminjaman" className={`${pathname === "/riwayat-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faHistory} className="mr-2" />
                 Riwayat Peminjaman
+                {/* Display approved and rejected counts with color indicators */}
+                {/* <span className={`ml-2 text-sm font-bold ${approvedCount > 0 ? "text-green-500" : "text-gray-300"}`}>{approvedCount > 0 ? approvedCount : 0}</span> */}
+                {/* <span className={`ml-2 text-sm font-bold ${rejectedCount > 0 ? "text-red-500" : "text-gray-300"}`}>{rejectedCount > 0 ? rejectedCount : 0}</span> */}
               </Link>
 
               <Link href="/riwayat-pengaduan" className={`${pathname === "/riwayat-pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
@@ -109,17 +114,14 @@ export function Navbar() {
             </>
           )}
 
-          {/* User Icon with dropdown */}
           <div className="relative">
             <button onClick={toggleUserMenu} className="text-gray-300 hover:bg-gray-700 px-3 py-2 rounded-full">
               <FontAwesomeIcon icon={faUserCircle} />
             </button>
 
-            {/* Dropdown menu for user information */}
             {isUserMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
                 <div className="px-4 py-2 text-gray-700">
-                  {/* <div className="font-bold">Nama : {user.name || "User"}</div> */}
                   <div className="font-bold py-1"> {user.email || "Email"}</div>
                   <div className="text-sm font-bold text-gray-500">{user.role || "Role"}</div>
                 </div>

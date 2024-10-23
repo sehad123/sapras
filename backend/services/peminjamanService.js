@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
-const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan, nama_peminjam, role_peminjam, bukti_persetujuan }) => {
+const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan, bukti_persetujuan }) => {
   // Pastikan barangId diubah menjadi integer
   const parsedBarangId = parseInt(barangId, 10);
 
@@ -17,8 +17,7 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTim
       keperluan,
       kategori,
       nama_kegiatan,
-      nama_peminjam,
-      role_peminjam,
+
       status: "PENDING",
       bukti_persetujuan, // Simpan path file bukti persetujuan
     },
@@ -110,7 +109,7 @@ const getAllPeminjaman = async () => {
         select: { name: true }, // Select the 'name' field from barang
       },
       user: {
-        select: { name: true, email: true }, // Select the 'name' and 'email' fields from the user
+        select: { name: true, email: true, role: true }, // Select the 'name' and 'email' fields from the user
       },
     },
     orderBy: {
@@ -134,4 +133,25 @@ const countPendingPeminjaman = async () => {
 
   return pendingCount;
 };
-module.exports = { createPeminjaman, rejectPeminjaman, countPendingPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman };
+
+const countApprovedPeminjaman = async (userId) => {
+  const approvedCount = await prisma.peminjaman.count({
+    where: {
+      status: "APPROVED",
+      userId: userId, // Filter berdasarkan userId
+    },
+  });
+  return approvedCount;
+};
+
+const countRejectPeminjaman = async (userId) => {
+  const rejectedCount = await prisma.peminjaman.count({
+    where: {
+      status: "REJECTED",
+      userId: userId, // Filter berdasarkan userId
+    },
+  });
+  return rejectedCount;
+};
+
+module.exports = { createPeminjaman, rejectPeminjaman, countApprovedPeminjaman, countRejectPeminjaman, countPendingPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman };

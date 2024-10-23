@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFile } from "@fortawesome/free-solid-svg-icons";
+import CustomModal from "../../components/Modal";
 
 const PeminjamanList = () => {
   const [peminjamanList, setPeminjamanList] = useState([]);
@@ -13,6 +14,9 @@ const PeminjamanList = () => {
   const [startDateFilter, setStartDateFilter] = useState("");
   const [endDateFilter, setEndDateFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [currentAction, setCurrentAction] = useState(null);
+  const [currentId, setCurrentId] = useState(null);
   const itemsPerPage = 6;
 
   // Fetch all peminjaman data from the backend
@@ -31,16 +35,30 @@ const PeminjamanList = () => {
     fetchPeminjaman();
   }, []);
 
+  // Handle modal open/close
+  const openModal = (action, id) => {
+    setCurrentAction(action);
+    setCurrentId(id);
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setCurrentAction(null);
+    setCurrentId(null);
+  };
+
   // Handle accept action
-  const handleAccept = async (id) => {
+  const handleAccept = async () => {
+    closeModal(); // Close modal first
     try {
-      const response = await fetch(`http://localhost:5000/api/peminjaman/${id}/approve`, {
+      const response = await fetch(`http://localhost:5000/api/peminjaman/${currentId}/approve`, {
         method: "PUT",
       });
 
       if (response.ok) {
         toast.success("Peminjaman Diterima!");
-        setPeminjamanList((prevList) => prevList.map((item) => (item.id === id ? { ...item, status: "APPROVED" } : item)));
+        setPeminjamanList((prevList) => prevList.map((item) => (item.id === currentId ? { ...item, status: "APPROVED" } : item)));
       } else {
         toast.error("Failed to approve peminjaman.");
       }
@@ -51,15 +69,16 @@ const PeminjamanList = () => {
   };
 
   // Handle reject action
-  const handleReject = async (id) => {
+  const handleReject = async () => {
+    closeModal(); // Close modal first
     try {
-      const response = await fetch(`http://localhost:5000/api/peminjaman/${id}/reject`, {
+      const response = await fetch(`http://localhost:5000/api/peminjaman/${currentId}/reject`, {
         method: "PUT",
       });
 
       if (response.ok) {
         toast.success("Peminjaman Ditolak!");
-        setPeminjamanList((prevList) => prevList.map((item) => (item.id === id ? { ...item, status: "REJECTED" } : item)));
+        setPeminjamanList((prevList) => prevList.map((item) => (item.id === currentId ? { ...item, status: "REJECTED" } : item)));
       } else {
         toast.error("Failed to reject peminjaman.");
       }
@@ -137,7 +156,7 @@ const PeminjamanList = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {currentItems.map((peminjaman) => (
               <div key={peminjaman.id} className="border rounded-lg p-4 shadow-md">
-                <h2 className="text-lg font-semibold mb-2">{peminjaman.nama_peminjam}</h2>
+                <h2 className="text-lg font-semibold mb-2">{peminjaman.user.name}</h2>
                 <p className="text-sm mb-1">
                   <strong>Email:</strong>{" "}
                   <a
@@ -149,7 +168,7 @@ const PeminjamanList = () => {
                   </a>
                 </p>
                 <p className="text-sm mb-1">
-                  <strong>Peran:</strong> {peminjaman.role_peminjam}
+                  <strong>Peran:</strong> {peminjaman.user.role}
                 </p>
                 <p className="text-sm mb-1">
                   <strong>Nama Barang:</strong> {peminjaman.barang.name}
@@ -197,17 +216,17 @@ const PeminjamanList = () => {
                     <a href={`http://localhost:5000/uploads/${peminjaman.bukti_persetujuan}`} className="text-blue-500 underline" download>
                       <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
                         <FontAwesomeIcon icon={faFile} className="mr-2" />
-                        Lihat Bukti
+                        Bukti Persetujuan
                       </button>
                     </a>
                   ) : null}
                   <div>
                     {peminjaman.status === "PENDING" && (
                       <>
-                        <button onClick={() => handleAccept(peminjaman.id)} className="bg-green-500 text-white px-4 py-2 rounded-md mr-2">
+                        <button onClick={() => openModal("accept", peminjaman.id)} className="bg-green-500 text-white px-4 py-2 rounded-md mr-2">
                           Terima
                         </button>
-                        <button onClick={() => handleReject(peminjaman.id)} className="bg-red-500 text-white px-4 py-2 rounded-md">
+                        <button onClick={() => openModal("reject", peminjaman.id)} className="bg-red-500 text-white px-4 py-2 rounded-md">
                           Tolak
                         </button>
                       </>
@@ -221,6 +240,15 @@ const PeminjamanList = () => {
           <p className="text-center">Tidak ada peminjaman yang ditemukan.</p>
         )}
       </div>
+
+      <CustomModal
+        isOpen={modalIsOpen}
+        onClose={closeModal}
+        onConfirm={currentAction === "accept" ? handleAccept : handleReject}
+        title="Konfirmasi Tindakan"
+        message={`Apakah Anda yakin ingin ${currentAction === "accept" ? "menerima" : "menolak"} peminjaman ini?`}
+        isAccept={currentAction === "accept"} // Pass action type
+      />
 
       {/* Pagination Controls */}
       <div className="flex justify-between items-center mt-4">

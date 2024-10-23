@@ -1,5 +1,5 @@
 const express = require("express");
-const { createPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman, rejectPeminjaman, countPendingPeminjaman } = require("../services/peminjamanService");
+const { createPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman, rejectPeminjaman, countPendingPeminjaman, countAprrovedPeminjaman, countRejectPeminjaman } = require("../services/peminjamanService");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient(); // Inisialisasi Prisma di sini
@@ -57,8 +57,6 @@ router.post("/peminjaman", upload.single("bukti_persetujuan"), async (req, res) 
       keperluan,
       kategori,
       nama_kegiatan,
-      nama_peminjam: user.name,
-      role_peminjam: user.role,
       bukti_persetujuan, // Menggunakan nama variabel yang konsisten
     });
 
@@ -123,6 +121,34 @@ router.get("/peminjaman/count/pending", async (req, res) => {
     res.status(200).json({ pendingCount });
   } catch (error) {
     res.status(500).json({ error: "Failed to count pending peminjaman" });
+  }
+});
+
+// Rute untuk menghitung approved peminjaman
+router.get("/peminjaman/count/approved/:userId", async (req, res) => {
+  try {
+    const userId = req.user.id; // Pastikan req.user.id sudah di-set oleh middleware
+    if (!userId) {
+      return res.status(400).json({ error: "User ID not provided" });
+    }
+    const approvedCount = await countApprovedPeminjaman(userId); // Menggunakan userId dari middleware
+    res.status(200).json({ approvedCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count approved peminjaman" });
+  }
+});
+
+// Rute untuk menghitung rejected peminjaman
+router.get("/peminjaman/count/rejected/:userId", async (req, res) => {
+  try {
+    const userId = req.user.id; // Pastikan req.user.id sudah di-set oleh middleware
+    if (!userId) {
+      return res.status(400).json({ error: "User ID not provided" });
+    }
+    const rejectedCount = await countRejectPeminjaman(userId); // Menggunakan userId dari middleware
+    res.status(200).json({ rejectedCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count rejected peminjaman" });
   }
 });
 

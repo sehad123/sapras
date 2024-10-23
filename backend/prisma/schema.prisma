@@ -48,8 +48,6 @@ model Barang {
 model Peminjaman {
   id         Int              @id @default(autoincrement())
   userId     Int
-  nama_peminjam String?
-  role_peminjam String?
   barangId   Int
   keperluan  String?
   nama_kegiatan   String?
@@ -67,8 +65,6 @@ model Peminjaman {
 model Pengaduan {
   id             Int              @id @default(autoincrement())
   userId         Int
-  nama_pengadu String?
-  role_pengadu String?
   kategoriId     Int
   date           DateTime         @default(now()) // Default ke tanggal saat ini
   jam            String           // Kolom untuk menunjukkan jam saat ini (misalnya "17:20")
@@ -84,8 +80,8 @@ enum StatusPeminjaman {
   PENDING
   APPROVED
   REJECTED
-  DIPINJAM
   DIKEMBALIKAN
+  DIPINJAM
 }
 
 enum StatusPengaduan {

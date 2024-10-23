@@ -5,7 +5,7 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
   const [kategori, setKategori] = useState([]);
   const [selectedKategori, setSelectedKategori] = useState("");
   const [barang, setBarang] = useState([]);
-  const [user, setUser] = useState({ name: "", role: "", email: "", id: "" });
+  const [user, setUser] = useState({ id: "" });
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -13,8 +13,7 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
       setUser(storedUser);
       setFormData((prevData) => ({
         ...prevData,
-        nama_peminjam: storedUser.name,
-        role_peminjam: storedUser.role,
+
         userId: storedUser.id, // Set userId di formData
       }));
     }
@@ -29,8 +28,6 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
     startTime: "",
     endTime: "",
     bukti_persetujuan: "",
-    nama_peminjam: "",
-    role_peminjam: "",
   });
 
   const [validationErrors, setValidationErrors] = useState({

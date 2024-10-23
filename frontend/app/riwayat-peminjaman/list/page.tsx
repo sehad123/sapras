@@ -3,12 +3,15 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFile } from "@fortawesome/free-solid-svg-icons";
 import { ToastContainer, toast } from "react-toastify";
+import CustomModal from "../modal/page"; // Import your custom modal
 import "react-toastify/dist/ReactToastify.css";
 
 const PeminjamanList = ({ userId }) => {
   const [peminjaman, setPeminjaman] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPeminjamanId, setSelectedPeminjamanId] = useState(null);
 
   useEffect(() => {
     const fetchPeminjaman = async () => {
@@ -36,8 +39,13 @@ const PeminjamanList = ({ userId }) => {
   }, [userId]);
 
   const handleReturn = async (peminjamanId) => {
+    setSelectedPeminjamanId(peminjamanId);
+    setIsModalOpen(true);
+  };
+
+  const confirmReturn = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/peminjaman/${peminjamanId}/kembali`, {
+      const response = await fetch(`http://localhost:5000/api/peminjaman/${selectedPeminjamanId}/kembali`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +60,10 @@ const PeminjamanList = ({ userId }) => {
       toast.success("Barang Berhasil Dikembalikan !", {});
 
       // Update the list locally without re-fetching
-      setPeminjaman((prevPeminjaman) => prevPeminjaman.map((item) => (item.id === peminjamanId ? { ...item, status: "DIKEMBALIKAN" } : item)));
+      setPeminjaman((prevPeminjaman) => prevPeminjaman.map((item) => (item.id === selectedPeminjamanId ? { ...item, status: "DIKEMBALIKAN" } : item)));
+
+      // Close the modal after successful return
+      setIsModalOpen(false);
     } catch (error) {
       // Menggunakan toast untuk notifikasi error
       toast.error(error.message, {});
@@ -78,7 +89,7 @@ const PeminjamanList = ({ userId }) => {
             <tr className="bg-blue-500 text-white">
               <th className="py-3 px-4 text-left">No</th>
               <th className="py-3 px-4 text-left">Nama Barang</th>
-              <th className="py-3 px-4 text-left">Keperluan</th>
+              <th className="py-3 px-4 text-left">Tanggal Pengajuan</th>
               <th className="py-3 px-4 text-left">Tanggal Peminjaman</th>
               <th className="py-3 px-4 text-left">Tanggal Pengembalian</th>
               <th className="py-3 px-4 text-left">Status</th>
@@ -90,8 +101,19 @@ const PeminjamanList = ({ userId }) => {
             {peminjaman.map((item, index) => (
               <tr key={item.id} className="border-b border-gray-200">
                 <td className="py-2 px-4">{index + 1}</td>
-                <td className="py-2 px-4">{item.barang.name}</td> {/* Display the barang name */}
-                <td className="py-2 px-4">{item.keperluan}</td>
+                <td className="py-2 px-4">{item.barang.name}</td>
+                <td className="py-2 px-4 border-b">
+                  {new Date(item.createdAt).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}{" "}
+                  /
+                  {new Date(item.createdAt).toLocaleTimeString("id-ID", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </td>
                 <td className="py-2 px-4 border-b">
                   {new Date(item.startDate).toLocaleDateString("id-ID", {
                     day: "numeric",
@@ -129,6 +151,9 @@ const PeminjamanList = ({ userId }) => {
         </table>
       )}
       <ToastContainer autoClose={3000} />
+
+      {/* Custom Modal for confirmation */}
+      <CustomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={confirmReturn} title="Konfirmasi Pengembalian" message="Apakah Anda yakin ingin mengembalikan barang ini?" />
     </div>
   );
 };
