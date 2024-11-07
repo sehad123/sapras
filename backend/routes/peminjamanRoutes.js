@@ -1,5 +1,18 @@
 const express = require("express");
-const { createPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman, rejectPeminjaman, countPendingPeminjaman, countAprrovedPeminjaman, countRejectPeminjaman } = require("../services/peminjamanService");
+const {
+  createPeminjaman,
+  getAllPeminjaman,
+  approvePeminjaman,
+  returnBarang,
+  trackPeminjaman,
+  rejectPeminjaman,
+  countPendingPeminjaman,
+  countAprrovedPeminjaman,
+  countRejectPeminjaman,
+  countDipinjamPeminjaman,
+  countDitolakPeminjaman,
+  countDikembalikanPeminjaman,
+} = require("../services/peminjamanService");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient(); // Inisialisasi Prisma di sini
@@ -17,6 +30,27 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+
+router.put("/peminjaman/:id/kembali", upload.single("bukti_pengembalian"), async (req, res) => {
+  try {
+    console.log("File yang diunggah:", req.file); // Debug file upload
+    const { id } = req.params;
+    const buktiPengembalianPath = req.file ? req.file.filename : null;
+
+    if (!buktiPengembalianPath) {
+      return res.status(400).json({ error: "File bukti pengembalian tidak diunggah." });
+    }
+
+    // Panggil fungsi returnBarang dan log hasilnya
+    const peminjaman = await returnBarang(parseInt(id), buktiPengembalianPath);
+    console.log("Peminjaman berhasil diperbarui:", peminjaman);
+
+    res.json(peminjaman);
+  } catch (error) {
+    console.error("Error mengembalikan barang:", error); // Tambahkan log error
+    res.status(500).json({ error: "Failed to return barang", details: error.message });
+  }
+});
 
 router.post("/peminjaman", upload.single("bukti_persetujuan"), async (req, res) => {
   const { userId, barangId, startDate, endDate, startTime, endTime, keperluan, kategori, nama_kegiatan } = req.body;
@@ -69,32 +103,35 @@ router.post("/peminjaman", upload.single("bukti_persetujuan"), async (req, res) 
   }
 });
 
+// Route to approve peminjaman
 router.put("/peminjaman/:id/approve", async (req, res) => {
   try {
-    const peminjaman = await approvePeminjaman(parseInt(req.params.id)); // Parse id di sini untuk efisiensi
-    res.json(peminjaman);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to approve peminjaman" });
-  }
-});
-router.put("/peminjaman/:id/reject", async (req, res) => {
-  try {
-    const peminjaman = await rejectPeminjaman(parseInt(req.params.id)); // Parse id di sini untuk efisiensi
+    const { id } = req.params;
+    const { catatan } = req.body; // Retrieve catatan from request body
+
+    // Pass id and catatan to the approvePeminjaman service
+    const peminjaman = await approvePeminjaman(parseInt(id), catatan);
     res.json(peminjaman);
   } catch (error) {
     res.status(500).json({ error: "Failed to approve peminjaman" });
   }
 });
 
-// Backend route for handling "Kembalikan" action
-router.put("/peminjaman/:id/kembali", async (req, res) => {
+// Route to reject peminjaman
+router.put("/peminjaman/:id/reject", async (req, res) => {
   try {
-    const peminjaman = await returnBarang(parseInt(req.params.id)); // Using the service you provided
-    res.json(peminjaman); // Return the updated peminjaman object
+    const { id } = req.params;
+    const { catatan } = req.body; // Retrieve catatan from request body
+
+    // Pass id and catatan to the rejectPeminjaman service
+    const peminjaman = await rejectPeminjaman(parseInt(id), catatan);
+    res.json(peminjaman);
   } catch (error) {
-    res.status(500).json({ error: "Failed to return barang" });
+    res.status(500).json({ error: "Failed to reject peminjaman" });
   }
 });
+
+// Backend route for handling "Kembalikan" action
 
 router.get("/peminjaman/user/:userId", async (req, res) => {
   try {
@@ -123,6 +160,30 @@ router.get("/peminjaman/count/pending", async (req, res) => {
     res.status(500).json({ error: "Failed to count pending peminjaman" });
   }
 });
+router.get("/peminjaman/count/approved", async (req, res) => {
+  try {
+    const pendingCount = await countDipinjamPeminjaman(); // Menggunakan service untuk menghitung peminjaman pending
+    res.status(200).json({ pendingCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count pending peminjaman" });
+  }
+});
+router.get("/peminjaman/count/reject", async (req, res) => {
+  try {
+    const pendingCount = await countDitolakPeminjaman(); // Menggunakan service untuk menghitung peminjaman pending
+    res.status(200).json({ pendingCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count pending peminjaman" });
+  }
+});
+router.get("/peminjaman/count/dikembalikan", async (req, res) => {
+  try {
+    const pendingCount = await countDikembalikanPeminjaman(); // Menggunakan service untuk menghitung peminjaman pending
+    res.status(200).json({ pendingCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count pending peminjaman" });
+  }
+});
 
 // Rute untuk menghitung approved peminjaman
 router.get("/peminjaman/count/approved/:userId", async (req, res) => {
@@ -131,7 +192,7 @@ router.get("/peminjaman/count/approved/:userId", async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: "User ID not provided" });
     }
-    const approvedCount = await countApprovedPeminjaman(userId); // Menggunakan userId dari middleware
+    const approvedCount = await countApprovedPeminjaman(parseInt(userId)); // Menggunakan userId dari middleware
     res.status(200).json({ approvedCount });
   } catch (error) {
     res.status(500).json({ error: "Failed to count approved peminjaman" });
@@ -145,7 +206,7 @@ router.get("/peminjaman/count/rejected/:userId", async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: "User ID not provided" });
     }
-    const rejectedCount = await countRejectPeminjaman(userId); // Menggunakan userId dari middleware
+    const rejectedCount = await countRejectPeminjaman(parseInt(userId)); // Menggunakan userId dari middleware
     res.status(200).json({ rejectedCount });
   } catch (error) {
     res.status(500).json({ error: "Failed to count rejected peminjaman" });

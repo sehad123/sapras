@@ -17,7 +17,8 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTim
       keperluan,
       kategori,
       nama_kegiatan,
-
+      bukti_pengembalian: "",
+      catatan: "",
       status: "PENDING",
       bukti_persetujuan, // Simpan path file bukti persetujuan
     },
@@ -26,13 +27,13 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTim
   return peminjaman;
 };
 
-const approvePeminjaman = async (id) => {
+const approvePeminjaman = async (id, catatan) => {
   // Mulai transaksi agar update peminjaman dan barang terjadi bersamaan
   const transaction = await prisma.$transaction(async (prisma) => {
     // Update status peminjaman menjadi "APPROVED"
     const peminjaman = await prisma.peminjaman.update({
       where: { id },
-      data: { status: "APPROVED" },
+      data: { status: "APPROVED", catatan: catatan },
     });
 
     if (!peminjaman) {
@@ -50,10 +51,10 @@ const approvePeminjaman = async (id) => {
 
   return transaction;
 };
-const rejectPeminjaman = async (id) => {
+const rejectPeminjaman = async (id, catatan) => {
   const peminjaman = await prisma.peminjaman.update({
     where: { id },
-    data: { status: "REJECTED" },
+    data: { status: "REJECTED", catatan: catatan },
   });
 
   if (!peminjaman) {
@@ -63,23 +64,43 @@ const rejectPeminjaman = async (id) => {
   return peminjaman;
 };
 
-const returnBarang = async (id) => {
-  const peminjaman = await prisma.peminjaman.update({
-    where: { id },
-    data: { status: "DIKEMBALIKAN" },
-  });
+const returnBarang = async (id, buktiPengembalian) => {
+  try {
+    // Cek apakah peminjaman dengan ID tersebut ada
+    const peminjaman = await prisma.peminjaman.findUnique({
+      where: { id },
+    });
 
-  if (!peminjaman) {
-    throw new Error("Peminjaman tidak ditemukan");
+    if (!peminjaman) {
+      throw new Error("Peminjaman tidak ditemukan");
+    }
+
+    // Update record peminjaman dengan status "DIKEMBALIKAN" dan bukti_pengembalian
+    const updatedPeminjaman = await prisma.peminjaman.update({
+      where: { id },
+      data: {
+        status: "DIKEMBALIKAN",
+        bukti_pengembalian: buktiPengembalian, // Pastikan kolom ini sesuai dengan nama di database
+      },
+    });
+
+    // Pastikan barangId ada di record peminjaman
+    if (!peminjaman.barangId) {
+      throw new Error("barangId tidak ditemukan pada peminjaman");
+    }
+
+    // Update barang agar status ketersediaannya kembali tersedia
+    await prisma.barang.update({
+      where: { id: peminjaman.barangId },
+      data: { available: "Ya" },
+    });
+
+    // Kembalikan data peminjaman yang sudah diperbarui
+    return updatedPeminjaman;
+  } catch (error) {
+    console.error("Error di returnBarang:", error.message);
+    throw new Error("Gagal mengembalikan barang: " + error.message);
   }
-
-  // Update barang setelah dikembalikan
-  await prisma.barang.update({
-    where: { id: peminjaman.barangId },
-    data: { available: "Ya" },
-  });
-
-  return peminjaman;
 };
 
 // Example query in your service to fetch peminjaman with the associated barang name
@@ -91,6 +112,9 @@ const trackPeminjaman = async (userId) => {
         // Include related barang data
         select: { name: true }, // Select only the 'name' field from barang
       },
+    },
+    orderBy: {
+      createdAt: "desc", // Mengurutkan berdasarkan 'createdAt' secara menurun
     },
   });
 
@@ -134,6 +158,36 @@ const countPendingPeminjaman = async () => {
   return pendingCount;
 };
 
+const countDipinjamPeminjaman = async () => {
+  const pendingCount = await prisma.peminjaman.count({
+    where: {
+      status: "APPROVED",
+    },
+  });
+
+  return pendingCount;
+};
+
+const countDitolakPeminjaman = async () => {
+  const pendingCount = await prisma.peminjaman.count({
+    where: {
+      status: "REJECTED",
+    },
+  });
+
+  return pendingCount;
+};
+
+const countDikembalikanPeminjaman = async () => {
+  const pendingCount = await prisma.peminjaman.count({
+    where: {
+      status: "DIKEMBALIKAN",
+    },
+  });
+
+  return pendingCount;
+};
+
 const countApprovedPeminjaman = async (userId) => {
   const approvedCount = await prisma.peminjaman.count({
     where: {
@@ -154,4 +208,18 @@ const countRejectPeminjaman = async (userId) => {
   return rejectedCount;
 };
 
-module.exports = { createPeminjaman, rejectPeminjaman, countApprovedPeminjaman, countRejectPeminjaman, countPendingPeminjaman, getAllPeminjaman, approvePeminjaman, returnBarang, trackPeminjaman };
+module.exports = {
+  createPeminjaman,
+  countDikembalikanPeminjaman,
+  countDipinjamPeminjaman,
+  countRejectPeminjaman,
+  countDitolakPeminjaman,
+  rejectPeminjaman,
+  countApprovedPeminjaman,
+  countRejectPeminjaman,
+  countPendingPeminjaman,
+  getAllPeminjaman,
+  approvePeminjaman,
+  returnBarang,
+  trackPeminjaman,
+};

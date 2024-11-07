@@ -148,6 +148,11 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
     // Pastikan formData sudah mengandung userId yang diambil dari localStorage
     await onSubmit(formData); // Kirim formData dengan userId
     onClose(); // Close the modal after submission
+
+    // Menunda pengalihan halaman selama 5 detik (5000 ms)
+    setTimeout(() => {
+      window.location.href = "/riwayat-peminjaman"; // Navigasi ke route riwayat peminjaman
+    }, 3000);
   };
 
   if (!isOpen) return null;

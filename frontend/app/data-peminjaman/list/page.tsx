@@ -49,11 +49,16 @@ const PeminjamanList = () => {
   };
 
   // Handle accept action
-  const handleAccept = async () => {
+  // Handle accept action with catatan
+  const handleAccept = async (catatan) => {
     closeModal(); // Close modal first
     try {
       const response = await fetch(`http://localhost:5000/api/peminjaman/${currentId}/approve`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ catatan }), // Mengirim catatan ke backend
       });
 
       if (response.ok) {
@@ -68,12 +73,16 @@ const PeminjamanList = () => {
     }
   };
 
-  // Handle reject action
-  const handleReject = async () => {
+  // Handle reject action with catatan
+  const handleReject = async (catatan) => {
     closeModal(); // Close modal first
     try {
       const response = await fetch(`http://localhost:5000/api/peminjaman/${currentId}/reject`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ catatan }), // Mengirim catatan ke backend
       });
 
       if (response.ok) {
@@ -89,6 +98,7 @@ const PeminjamanList = () => {
   };
 
   // Filtering logic
+  // Filtering logic
   useEffect(() => {
     let filtered = peminjamanList;
 
@@ -97,7 +107,12 @@ const PeminjamanList = () => {
     }
 
     if (searchTerm) {
-      filtered = filtered.filter((item) => item.nama_peminjam.toLowerCase().includes(searchTerm.toLowerCase()) || item.nama_kegiatan.toLowerCase().includes(searchTerm.toLowerCase()));
+      filtered = filtered.filter((item) => {
+        const namaPeminjam = item.barang.name ? item.barang.name.toLowerCase() : ""; // Pastikan tidak undefined
+        // const namaKegiatan = item.nama_kegiatan ? item.nama_kegiatan.toLowerCase() : ""; // Pastikan tidak undefined
+        return namaPeminjam.includes(searchTerm.toLowerCase());
+        // || namaKegiatan.includes(searchTerm.toLowerCase());
+      });
     }
 
     if (startDateFilter && endDateFilter) {
@@ -124,7 +139,7 @@ const PeminjamanList = () => {
             <label className="block mb-2 text-sm">Status:</label>
             <select className="p-2 border rounded-md" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">Semua</option>
-              <option value="APPROVED">APPROVED</option>
+              <option value="APPROVED">DIPINJAM</option>
               <option value="REJECTED">REJECTED</option>
               <option value="PENDING">PENDING</option>
               <option value="DIKEMBALIKAN">DIKEMBALIKAN</option>
@@ -132,7 +147,7 @@ const PeminjamanList = () => {
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Cari Nama atau Kegiatan:</label>
+            <label className="block mb-2 text-sm">Cari Barang atau Tempat:</label>
             <input type="text" className="p-2 border rounded-md" placeholder="Nama atau Kegiatan" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
@@ -140,12 +155,12 @@ const PeminjamanList = () => {
         {/* Kontainer untuk dua filter berikutnya di sebelah kanan */}
         <div className="flex flex-col md:flex-row gap-10">
           <div>
-            <label className="block mb-2 text-sm">Tanggal Mulai:</label>
+            <label className="block mb-2 text-sm">Tanggal Peminjaman:</label>
             <input type="date" className="p-2 border rounded-md" value={startDateFilter} onChange={(e) => setStartDateFilter(e.target.value)} />
           </div>
 
           <div>
-            <label className="block mb-2 text-sm">Tanggal Selesai:</label>
+            <label className="block mb-2 text-sm">Tanggal Pengembalian:</label>
             <input type="date" className="p-2 border rounded-md" value={endDateFilter} onChange={(e) => setEndDateFilter(e.target.value)} />
           </div>
         </div>
@@ -156,7 +171,10 @@ const PeminjamanList = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {currentItems.map((peminjaman) => (
               <div key={peminjaman.id} className="border rounded-lg p-4 shadow-md">
-                <h2 className="text-lg font-semibold mb-2">{peminjaman.user.name}</h2>
+                <h2 className="text-lg font-semibold mb-2 text-center">{peminjaman.barang.name}</h2>
+                <p className="text-sm mb-1">
+                  <strong>Nama Peminjam:</strong> {peminjaman.user.name}
+                </p>
                 <p className="text-sm mb-1">
                   <strong>Email:</strong>{" "}
                   <a
@@ -170,9 +188,7 @@ const PeminjamanList = () => {
                 <p className="text-sm mb-1">
                   <strong>Peran:</strong> {peminjaman.user.role}
                 </p>
-                <p className="text-sm mb-1">
-                  <strong>Nama Barang:</strong> {peminjaman.barang.name}
-                </p>
+
                 <p className="text-sm mb-1">
                   <strong>Tanggal Peminjaman:</strong>{" "}
                   {new Date(peminjaman.startDate).toLocaleDateString("id-ID", {
@@ -208,18 +224,33 @@ const PeminjamanList = () => {
                     minute: "2-digit",
                   })}
                 </p>
+                <p className="text-sm mb-1">{peminjaman.status === "APPROVED" ? <strong>Status: DIPINJAM</strong> : <strong>Status: {peminjaman.status}</strong>}</p>
                 <p className="text-sm mb-1">
-                  <strong>Status:</strong> {peminjaman.status}
+                  <strong>Catatan:</strong> {peminjaman.catatan ? peminjaman.catatan : ""}
                 </p>
+
                 <div className="flex justify-between items-center mt-4">
-                  {peminjaman.bukti_persetujuan ? (
+                  {/* Bukti Persetujuan hanya muncul jika status peminjaman adalah "PENDING" dan ada bukti_persetujuan */}
+                  {peminjaman.status === "PENDING" && peminjaman.bukti_persetujuan && (
                     <a href={`http://localhost:5000/uploads/${peminjaman.bukti_persetujuan}`} className="text-blue-500 underline" download>
-                      <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
+                      <button className="bg-blue-500 text-white px-4 py-2 mx-2 rounded-md">
                         <FontAwesomeIcon icon={faFile} className="mr-2" />
                         Bukti Persetujuan
                       </button>
                     </a>
-                  ) : null}
+                  )}
+
+                  {/* Bukti Pengembalian hanya muncul jika ada bukti_pengembalian */}
+                  {peminjaman.bukti_pengembalian && (
+                    <a href={`http://localhost:5000/uploads/${peminjaman.bukti_pengembalian}`} className="text-blue-500 underline" download>
+                      <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
+                        <FontAwesomeIcon icon={faFile} className="mr-2" />
+                        Bukti Pengembalian
+                      </button>
+                    </a>
+                  )}
+
+                  {/* Tombol Terima dan Tolak hanya muncul jika status peminjaman adalah "PENDING" */}
                   <div>
                     {peminjaman.status === "PENDING" && (
                       <>
@@ -240,7 +271,6 @@ const PeminjamanList = () => {
           <p className="text-center">Tidak ada peminjaman yang ditemukan.</p>
         )}
       </div>
-
       <CustomModal
         isOpen={modalIsOpen}
         onClose={closeModal}
@@ -249,7 +279,6 @@ const PeminjamanList = () => {
         message={`Apakah Anda yakin ingin ${currentAction === "accept" ? "menerima" : "menolak"} peminjaman ini?`}
         isAccept={currentAction === "accept"} // Pass action type
       />
-
       {/* Pagination Controls */}
       <div className="flex justify-between items-center mt-4">
         <button className="px-4 py-2 bg-gray-200 rounded-md" disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>

@@ -18,9 +18,9 @@ const registerUser = async ({ name, email, password, role }) => {
 // Read all users with role "Pegawai"
 const getAllPegawaiUsers = async () => {
   return await prisma.user.findMany({
-    where: {
-      role: "Pegawai",
-    },
+    // where: {
+    //   role: "Pegawai",
+    // },
   });
 };
 

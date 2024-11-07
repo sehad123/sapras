@@ -5,13 +5,13 @@ import { faDashboard, faTable, faUsers, faClipboardList, faUserCircle, faHandHol
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
-export function Navbar() {
+export function Navbar({ userId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [user, setUser] = useState({ name: "", role: "", email: "", id: "" });
   const [pendingCount, setPendingCount] = useState(0);
-  const [approvedCount, setApprovedCount] = useState(0); // State for approved count
-  const [rejectedCount, setRejectedCount] = useState(0); // State for rejected count
+  const [approvedCount, setApprovedCount] = useState(0);
+  const [rejectedCount, setRejectedCount] = useState(0);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -28,19 +28,19 @@ export function Navbar() {
         const pendingData = await pendingResponse.json();
         setPendingCount(pendingData.pendingCount);
 
-        const approvedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/approved/${user.id}`);
+        const approvedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/approved/${userId}`);
         const approvedData = await approvedResponse.json();
-        setApprovedCount(approvedData.approvedCount); // Set approved count
+        setApprovedCount(approvedData.approvedCount);
 
-        const rejectedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/rejected/${user.id}`);
+        const rejectedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/rejected/${userId}`);
         const rejectedData = await rejectedResponse.json();
-        setRejectedCount(rejectedData.rejectedCount); // Set rejected count
+        setRejectedCount(rejectedData.rejectedCount);
       } catch (error) {
         console.error("Error fetching counts:", error);
       }
     };
 
-    fetchCounts(); // Call when the component first mounts
+    fetchCounts();
 
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
@@ -48,7 +48,7 @@ export function Navbar() {
     } else {
       router.push("/login");
     }
-  }, [router]);
+  }, [router, userId]);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -102,7 +102,6 @@ export function Navbar() {
               <Link href="/riwayat-peminjaman" className={`${pathname === "/riwayat-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faHistory} className="mr-2" />
                 Riwayat Peminjaman
-                {/* Display approved and rejected counts with color indicators */}
                 {/* <span className={`ml-2 text-sm font-bold ${approvedCount > 0 ? "text-green-500" : "text-gray-300"}`}>{approvedCount > 0 ? approvedCount : 0}</span> */}
                 {/* <span className={`ml-2 text-sm font-bold ${rejectedCount > 0 ? "text-red-500" : "text-gray-300"}`}>{rejectedCount > 0 ? rejectedCount : 0}</span> */}
               </Link>
@@ -122,11 +121,11 @@ export function Navbar() {
             {isUserMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
                 <div className="px-4 py-2 text-gray-700">
-                  <div className="font-bold py-1"> {user.email || "Email"}</div>
+                  <div className="font-bold py-1">{user.email || "Email"}</div>
                   <div className="text-sm font-bold text-gray-500">{user.role || "Role"}</div>
                 </div>
                 <div className="border-t border-gray-200"></div>
-                <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-red-500 text-gray-700 hover:bg-gray-100">
+                <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100">
                   Logout
                 </button>
               </div>
@@ -137,3 +136,5 @@ export function Navbar() {
     </div>
   );
 }
+
+export default Navbar;
