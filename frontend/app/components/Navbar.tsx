@@ -1,17 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDashboard, faTable, faUsers, faClipboardList, faUserCircle, faHandHolding, faExclamationTriangle, faHistory } from "@fortawesome/free-solid-svg-icons";
+import { faDashboard, faTable, faUsers, faClipboardList, faUserCircle, faHandHolding, faExclamationTriangle, faHistory, faBell, faTimes } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 export function Navbar({ userId }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [user, setUser] = useState({ name: "", role: "", email: "", id: "" });
   const [pendingCount, setPendingCount] = useState(0);
-  const [approvedCount, setApprovedCount] = useState(0);
-  const [rejectedCount, setRejectedCount] = useState(0);
+  const [catatanCount, setCatatanCount] = useState(0);
+  const [notificationItems, setNotificationItems] = useState([]); // Tambahkan deklarasi notificationItems
 
   const router = useRouter();
   const pathname = usePathname();
@@ -20,39 +21,64 @@ export function Navbar({ userId }) {
     setIsUserMenuOpen(!isUserMenuOpen);
   };
 
-  // Fetch counts for pending, approved, and rejected peminjaman
+  const toggleNotification = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+  };
+
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchCounts = async (userId) => {
       try {
         const pendingResponse = await fetch("http://localhost:5000/api/peminjaman/count/pending");
         const pendingData = await pendingResponse.json();
         setPendingCount(pendingData.pendingCount);
 
-        const approvedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/approved/${userId}`);
-        const approvedData = await approvedResponse.json();
-        setApprovedCount(approvedData.approvedCount);
+        const catatanResponse = await fetch(`http://localhost:5000/api/peminjaman/user/${userId}/count`);
+        const catatanData = await catatanResponse.json();
+        setCatatanCount(catatanData.count);
 
-        const rejectedResponse = await fetch(`http://localhost:5000/api/peminjaman/count/rejected/${userId}`);
-        const rejectedData = await rejectedResponse.json();
-        setRejectedCount(rejectedData.rejectedCount);
+        const notificationResponse = await fetch(`http://localhost:5000/api/peminjaman/user/${userId}/notif`);
+        const notificationData = await notificationResponse.json();
+        setNotificationItems(notificationData); // Simpan data notifikasi
       } catch (error) {
         console.error("Error fetching counts:", error);
       }
     };
 
-    fetchCounts();
-
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
       setUser(storedUser);
+      fetchCounts(storedUser.id);
     } else {
       router.push("/login");
     }
-  }, [router, userId]);
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     router.push("/login");
+  };
+
+  // Fungsi untuk menangani pembaruan status notifikasi
+  const handleUpdateNotification = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/peminjaman/user/${user.id}/notifikasi`, {
+        method: "PUT", // Menggunakan PUT karena ingin memperbarui status
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Jika berhasil, memperbarui tampilan notifikasi
+        setNotificationItems([]);
+        setCatatanCount(0);
+        // alert("Notifikasi berhasil diperbarui.");
+      } else {
+        alert("Gagal memperbarui notifikasi.");
+      }
+    } catch (error) {
+      console.error("Error updating notification:", error);
+    }
   };
 
   return (
@@ -65,18 +91,15 @@ export function Navbar({ userId }) {
         <nav className="flex space-x-6">
           {user.role === "Admin" ? (
             <>
-              {/* Admin menus */}
               <Link href="/data-barang" className={`${pathname === "/data-barang" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faTable} className="mr-2" />
                 Data Barang
               </Link>
-
               <Link href="/data-peminjaman" className={`${pathname === "/data-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center relative`}>
                 <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
                 Data Peminjaman
                 {pendingCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingCount}</span>}
               </Link>
-
               <Link href="/data-pengaduan" className={`${pathname === "/data-pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
                 Data Pengaduan
@@ -88,28 +111,55 @@ export function Navbar({ userId }) {
             </>
           ) : (
             <>
-              {/* Non-admin menus */}
               <Link href="/peminjaman" className={`${pathname === "/peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faHandHolding} className="mr-2" />
                 Peminjaman
               </Link>
-
               <Link href="/pengaduan" className={`${pathname === "/pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faExclamationTriangle} className="mr-2" />
                 Pengaduan
               </Link>
-
               <Link href="/riwayat-peminjaman" className={`${pathname === "/riwayat-peminjaman" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faHistory} className="mr-2" />
                 Riwayat Peminjaman
-                {/* <span className={`ml-2 text-sm font-bold ${approvedCount > 0 ? "text-green-500" : "text-gray-300"}`}>{approvedCount > 0 ? approvedCount : 0}</span> */}
-                {/* <span className={`ml-2 text-sm font-bold ${rejectedCount > 0 ? "text-red-500" : "text-gray-300"}`}>{rejectedCount > 0 ? rejectedCount : 0}</span> */}
               </Link>
-
               <Link href="/riwayat-pengaduan" className={`${pathname === "/riwayat-pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faHistory} className="mr-2" />
                 Riwayat Pengaduan
               </Link>
+
+              {/* Notification Bell */}
+              <div className="relative flex items-center">
+                <FontAwesomeIcon icon={faBell} className="text-gray-300 hover:text-white cursor-pointer" onClick={toggleNotification} />
+                {catatanCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{catatanCount}</span>}
+
+                {/* Modal kecil di bawah ikon lonceng */}
+                {isNotificationOpen && (
+                  <div className="absolute right-0 mt-60 w-64 bg-white rounded-md shadow-lg p-4 z-10 max-h-80 overflow-y-auto">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-semibold mb-2 text-gray-700 mx-auto">Daftar Notifikasi</h3>
+                      <FontAwesomeIcon icon={faTimes} className="text-gray-500 cursor-pointer hover:text-gray-700" onClick={toggleNotification} />
+                    </div>
+                    <ul className="space-y-2">
+                      {notificationItems.length > 0 ? (
+                        notificationItems.slice(0, 5).map((item, index) => (
+                          <li key={index} className="text-gray-700 border-b border-gray-200 pb-2">
+                            <p className="font-semibold">Nama Barang: {item.barang.name}</p>
+                            <p className="text-sm">Tanggal Pengajuan: {new Date(item.createdAt).toLocaleDateString("id-ID")}</p>
+                            <p className="text-sm">Catatan: {item.catatan || "Tidak ada catatan"}</p>
+                            <p className="text-sm">Status: {item.status || "Tidak ada status"}</p>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-gray-500">Tidak ada notifikasi baru</li>
+                      )}
+                    </ul>
+                    <button onClick={handleUpdateNotification} className="text-blue-500 text-sm mt-3 underline">
+                      Tandai Semua sebagai Dibaca
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
@@ -117,7 +167,6 @@ export function Navbar({ userId }) {
             <button onClick={toggleUserMenu} className="text-gray-300 hover:bg-gray-700 px-3 py-2 rounded-full">
               <FontAwesomeIcon icon={faUserCircle} />
             </button>
-
             {isUserMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
                 <div className="px-4 py-2 text-gray-700">

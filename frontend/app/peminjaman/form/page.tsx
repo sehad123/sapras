@@ -152,7 +152,7 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
     // Menunda pengalihan halaman selama 5 detik (5000 ms)
     setTimeout(() => {
       window.location.href = "/riwayat-peminjaman"; // Navigasi ke route riwayat peminjaman
-    }, 3000);
+    }, 1000);
   };
 
   if (!isOpen) return null;
@@ -198,7 +198,7 @@ const PeminjamanFormModal = ({ isOpen, onClose, onSubmit, onFileChange }) => {
           <div className="mb-1">
             <label className="block text-sm font-medium text-gray-700">Barang:</label>
             <select name="barangId" className="mt-1 block w-full border border-gray-300 rounded-md p-2" value={formData.barangId} onChange={handleChange} required disabled={!selectedKategori}>
-              <option value="">Pilih Barang</option>
+              <option value="">Pilih Barang atau Tempat</option>
               {barang.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}

@@ -19,6 +19,7 @@ const createPeminjaman = async ({ userId, barangId, startDate, endDate, startTim
       nama_kegiatan,
       bukti_pengembalian: "",
       catatan: "",
+      notifikasi: "",
       status: "PENDING",
       bukti_persetujuan, // Simpan path file bukti persetujuan
     },
@@ -33,7 +34,7 @@ const approvePeminjaman = async (id, catatan) => {
     // Update status peminjaman menjadi "APPROVED"
     const peminjaman = await prisma.peminjaman.update({
       where: { id },
-      data: { status: "APPROVED", catatan: catatan },
+      data: { status: "APPROVED", catatan: catatan, notifikasi: "Ya" },
     });
 
     if (!peminjaman) {
@@ -54,11 +55,26 @@ const approvePeminjaman = async (id, catatan) => {
 const rejectPeminjaman = async (id, catatan) => {
   const peminjaman = await prisma.peminjaman.update({
     where: { id },
-    data: { status: "REJECTED", catatan: catatan },
+    data: { status: "REJECTED", catatan: catatan, notifikasi: "Ya" },
   });
 
   if (!peminjaman) {
     throw new Error("Peminjaman tidak ditemukan");
+  }
+
+  return peminjaman;
+};
+
+const pencetNotifikasi = async (userId) => {
+  // Mengupdate semua data peminjaman yang memiliki userId yang sama dan mengubah status notifikasi menjadi "Tidak"
+  const peminjaman = await prisma.peminjaman.updateMany({
+    where: { userId }, // Mencari semua peminjaman dengan userId yang sesuai
+    data: { notifikasi: "Tidak" }, // Mengubah nilai kolom 'notifikasi' menjadi "Tidak"
+  });
+
+  // Mengecek apakah ada perubahan yang terjadi
+  if (peminjaman.count === 0) {
+    throw new Error("Tidak ada peminjaman yang ditemukan untuk user ini");
   }
 
   return peminjaman;
@@ -125,6 +141,51 @@ const trackPeminjaman = async (userId) => {
   return peminjaman;
 };
 
+const trackPeminjamanNotifikasi = async (userId) => {
+  const peminjaman = await prisma.peminjaman.findMany({
+    where: {
+      userId: userId,
+      // catatan: {
+      //   not: "", // Filter agar kolom 'catatan' tidak kosong
+      // },
+      notifikasi: "Ya",
+    },
+    include: {
+      barang: {
+        // Include related barang data
+        select: { name: true }, // Select only the 'name' field from barang
+      },
+    },
+    orderBy: {
+      createdAt: "desc", // Mengurutkan berdasarkan 'createdAt' secara menurun
+    },
+  });
+
+  if (!peminjaman.length) {
+    throw new Error("Peminjaman tidak ditemukan untuk user ini");
+  }
+
+  return peminjaman;
+};
+
+const countPeminjamanWithCatatan = async (userId) => {
+  try {
+    const count = await prisma.peminjaman.count({
+      where: {
+        userId: userId,
+        catatan: {
+          not: "", // Filter agar kolom 'catatan' tidak kosong
+        },
+        notifikasi: "Ya",
+      },
+    });
+
+    return count; // Mengembalikan nilai count tanpa error jika 0
+  } catch (error) {
+    throw new Error("Gagal menghitung peminjaman dengan catatan: " + error.message);
+  }
+};
+
 // Fetch all peminjaman data, including related barang and user information
 const getAllPeminjaman = async () => {
   const peminjamanList = await prisma.peminjaman.findMany({
@@ -188,38 +249,18 @@ const countDikembalikanPeminjaman = async () => {
   return pendingCount;
 };
 
-const countApprovedPeminjaman = async (userId) => {
-  const approvedCount = await prisma.peminjaman.count({
-    where: {
-      status: "APPROVED",
-      userId: userId, // Filter berdasarkan userId
-    },
-  });
-  return approvedCount;
-};
-
-const countRejectPeminjaman = async (userId) => {
-  const rejectedCount = await prisma.peminjaman.count({
-    where: {
-      status: "REJECTED",
-      userId: userId, // Filter berdasarkan userId
-    },
-  });
-  return rejectedCount;
-};
-
 module.exports = {
   createPeminjaman,
   countDikembalikanPeminjaman,
   countDipinjamPeminjaman,
-  countRejectPeminjaman,
   countDitolakPeminjaman,
   rejectPeminjaman,
-  countApprovedPeminjaman,
-  countRejectPeminjaman,
+  pencetNotifikasi,
   countPendingPeminjaman,
   getAllPeminjaman,
   approvePeminjaman,
   returnBarang,
   trackPeminjaman,
+  countPeminjamanWithCatatan,
+  trackPeminjamanNotifikasi,
 };

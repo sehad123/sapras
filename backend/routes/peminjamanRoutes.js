@@ -7,11 +7,12 @@ const {
   trackPeminjaman,
   rejectPeminjaman,
   countPendingPeminjaman,
-  countAprrovedPeminjaman,
-  countRejectPeminjaman,
   countDipinjamPeminjaman,
   countDitolakPeminjaman,
   countDikembalikanPeminjaman,
+  countPeminjamanWithCatatan,
+  pencetNotifikasi,
+  trackPeminjamanNotifikasi,
 } = require("../services/peminjamanService");
 const { PrismaClient } = require("@prisma/client");
 
@@ -142,6 +143,41 @@ router.get("/peminjaman/user/:userId", async (req, res) => {
   }
 });
 
+router.get("/peminjaman/user/:userId/notif", async (req, res) => {
+  try {
+    const peminjaman = await trackPeminjamanNotifikasi(parseInt(req.params.userId));
+    res.json(peminjaman);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch peminjaman" });
+  }
+});
+
+router.put("/peminjaman/user/:userId/notifikasi", async (req, res) => {
+  try {
+    // Mengambil userId dari parameter dan memanggil fungsi pencetNotifikasi untuk mengubah status notifikasi
+    const peminjaman = await pencetNotifikasi(parseInt(req.params.userId));
+    res.json(peminjaman); // Mengembalikan hasil peminjaman yang sudah diperbarui
+  } catch (error) {
+    // Menampilkan error jika gagal memperbarui notifikasi
+    res.status(500).json({ error: "Failed to update notifications" });
+  }
+});
+
+router.get("/peminjaman/user/:userId/count", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "User ID tidak valid" });
+    }
+
+    // Memanggil fungsi countPeminjamanWithCatatan
+    const count = await countPeminjamanWithCatatan(userId);
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Failed to fetch peminjaman count" });
+  }
+});
+
 router.get("/peminjaman", async (req, res) => {
   try {
     const peminjamanList = await getAllPeminjaman();
@@ -182,34 +218,6 @@ router.get("/peminjaman/count/dikembalikan", async (req, res) => {
     res.status(200).json({ pendingCount });
   } catch (error) {
     res.status(500).json({ error: "Failed to count pending peminjaman" });
-  }
-});
-
-// Rute untuk menghitung approved peminjaman
-router.get("/peminjaman/count/approved/:userId", async (req, res) => {
-  try {
-    const userId = req.user.id; // Pastikan req.user.id sudah di-set oleh middleware
-    if (!userId) {
-      return res.status(400).json({ error: "User ID not provided" });
-    }
-    const approvedCount = await countApprovedPeminjaman(parseInt(userId)); // Menggunakan userId dari middleware
-    res.status(200).json({ approvedCount });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to count approved peminjaman" });
-  }
-});
-
-// Rute untuk menghitung rejected peminjaman
-router.get("/peminjaman/count/rejected/:userId", async (req, res) => {
-  try {
-    const userId = req.user.id; // Pastikan req.user.id sudah di-set oleh middleware
-    if (!userId) {
-      return res.status(400).json({ error: "User ID not provided" });
-    }
-    const rejectedCount = await countRejectPeminjaman(parseInt(userId)); // Menggunakan userId dari middleware
-    res.status(200).json({ rejectedCount });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to count rejected peminjaman" });
   }
 });
 

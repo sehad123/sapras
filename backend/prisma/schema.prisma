@@ -15,6 +15,7 @@ model User {
   password   String
   role       String     // "ADMIN", "PEGAWAI", "SUPERADMIN"
   createdAt  DateTime   @default(now())
+  penugasan String?
   peminjaman Peminjaman[]
   pengaduan  Pengaduan[]
 }
@@ -27,11 +28,11 @@ model KategoriBarang {
   barang   Barang[] // Relasi ke model Barang
 }
 
-model KategoriPengaduan {
-  id       Int      @id @default(autoincrement())
-  kategori String?
-  pengaduan Pengaduan[] // Relasi ke model Pengaduan
-}
+// model KategoriPengaduan {
+//   id       Int      @id @default(autoincrement())
+//   kategori String?
+//   pengaduan Pengaduan[] // Relasi ke model Pengaduan
+// }
 
 model Barang {
   id         Int              @id @default(autoincrement())
@@ -59,6 +60,7 @@ model Peminjaman {
   startTime  String           // Kolom untuk waktu mulai (misalnya "17:20")
   endTime    String           // Kolom untuk waktu selesai (misalnya "17:20")
   status     StatusPeminjaman @default(PENDING)
+  notifikasi String?
   createdAt  DateTime         @default(now())
   user       User             @relation(fields: [userId], references: [id])
   barang     Barang           @relation(fields: [barangId], references: [id])
@@ -67,15 +69,18 @@ model Peminjaman {
 model Pengaduan {
   id             Int              @id @default(autoincrement())
   userId         Int
-  kategoriId     Int
   date           DateTime         @default(now()) // Default ke tanggal saat ini
   jam            String           // Kolom untuk menunjukkan jam saat ini (misalnya "17:20")
+  kategori       String?          // Field untuk menyimpan URL foto
   photo          String?          // Field untuk menyimpan URL foto
+  beban_pengaduan String?
+  catatan         String?
   deskripsi      String?
+  notifikasi      String?
+  tanggapan      String?
   status         StatusPengaduan  @default(PENDING)
   createdAt      DateTime         @default(now())
   user           User             @relation(fields: [userId], references: [id])
-  kategori       KategoriPengaduan @relation(fields: [kategoriId], references: [id])
 }
 
 enum StatusPeminjaman {
