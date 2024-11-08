@@ -169,7 +169,7 @@ export default function BarangList() {
       <ToastContainer />
 
       <div className="bg-white p-8 rounded-lg shadow-lg w-full">
-        <h1 className="text-3xl font-bold text-center mb-6">Daftar Barang & Ruangan</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Daftar Barang & Tempat</h1>
         <div className="flex justify-end mb-4 -translate-y-16 ">
           <button className="bg-blue-500 text-white p-3 rounded-md shadow-lg hover:bg-blue-600 transition duration-200" onClick={handleAddBarang}>
             <FontAwesomeIcon icon={faPlus} size="lg" />

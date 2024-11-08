@@ -59,7 +59,7 @@ export function Navbar({ userId }) {
     <div className="bg-gray-100 h-[100px]">
       <header className="flex justify-between items-center p-4 bg-gray-900">
         <div onClick={() => router.push("/")} className="text-white font-bold text-lg cursor-pointer hover:text-gray-300">
-          HALO BAU
+          HALO STIS
         </div>
 
         <nav className="flex space-x-6">
