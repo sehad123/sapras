@@ -4,13 +4,14 @@ import { useState } from "react";
 function AddPegawaiModal({ onSave, onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [no_hp, setNo_hp] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Call onSave function from the parent and pass the new data
-    onSave({ name, email, password, role });
+    onSave({ name, email, password, role, no_hp });
     onClose(); // Close the modal after submission
   };
 
@@ -28,6 +29,10 @@ function AddPegawaiModal({ onSave, onClose }) {
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md" required />
           </div>
           <div className="mb-4">
+            <label className="block text-gray-700">No Hp</label>
+            <input type="number" value={no_hp} onChange={(e) => setNo_hp(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md" required />
+          </div>
+          <div className="mb-4">
             <label className="block text-gray-700">Password</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md" required />
           </div>
@@ -39,6 +44,7 @@ function AddPegawaiModal({ onSave, onClose }) {
               </option>
               <option value="Admin">Admin</option>
               <option value="Pegawai">Pegawai</option>
+              <option value="Pelaksana">Pelaksana</option>
               <option value="Mahasiswa">Mahasiswa</option>
               <option value="Dosen">Dosen</option>
               <option value="Alumni">Alumni</option>

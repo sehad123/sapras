@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faEdit, faTrash, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import EditPegawaiModal from "../edit/page"; // Import edit modal
 import DeleteConfirmationModal from "../delete/page"; // Import delete modal
 import AddPegawaiModal from "../add/page"; // Import the new Add Modal
@@ -14,6 +14,10 @@ export default function PegawaiList() {
   const [editingUser, setEditingUser] = useState(null); // State for the user being edited
   const [deletingUser, setDeletingUser] = useState(null); // State for the user being deleted
   const router = useRouter();
+
+  // const handleDetailTugas = (userId) => {
+  //   router.push(`/detail-tugas/${userId}`);
+  // };
 
   // Fetch Pegawai users when the component loads
   useEffect(() => {
@@ -137,7 +141,7 @@ export default function PegawaiList() {
       </button>
 
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-3xl w-full">
-        <h1 className="text-3xl font-bold text-center mb-6">Daftar Pengguna</h1>
+        <h1 className="text-3xl font-bold text-center mb-6">Daftar Pelaksana</h1>
 
         {/* Error message */}
         {error && <div className="text-red-500 text-center mb-4">{error}</div>}
@@ -149,8 +153,10 @@ export default function PegawaiList() {
               <th className="border border-gray-300 px-4 py-2 text-left">No</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Nama</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
+              <th className="border border-gray-300 px-4 py-2 text-left">No Hp</th>
               <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
               <th className="border border-gray-300 px-4 py-2 text-center">Action</th>
+              {/* <th className="border border-gray-300 px-4 py-2 text-center">Detail Tugas</th> Kolom detail */}
             </tr>
           </thead>
           <tbody>
@@ -160,6 +166,7 @@ export default function PegawaiList() {
                   <td className="border border-gray-300 px-4 py-2">{index + 1}</td> {/* Nomer Urut */}
                   <td className="border border-gray-300 px-4 py-2">{user.name}</td>
                   <td className="border border-gray-300 px-4 py-2">{user.email}</td>
+                  <td className="border border-gray-300 px-4 py-2">{user.no_hp}</td>
                   <td className="border border-gray-300 px-4 py-2">{user.role}</td>
                   <td className="border border-gray-300 px-4 py-2 flex justify-around text-center">
                     {/* Edit and Delete Icons */}
@@ -170,6 +177,11 @@ export default function PegawaiList() {
                       <FontAwesomeIcon icon={faTrash} />
                     </button>
                   </td>
+                  {/* <td className="border border-gray-300 px-4 py-2 text-center">
+                    <button className="text-green-500 hover:text-green-700" onClick={() => handleDetailTugas(user.id)}>
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                    </button>
+                  </td> */}
                 </tr>
               ))
             ) : (

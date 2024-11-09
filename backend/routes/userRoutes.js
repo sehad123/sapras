@@ -5,9 +5,9 @@ const { getAllPegawaiUsers, getUserById, updateUser, deleteUser } = require("../
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, no_hp } = req.body;
   try {
-    const newUser = await registerUser({ name, email, password, role });
+    const newUser = await registerUser({ name, email, password, role, no_hp });
     res.json(newUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -41,9 +41,9 @@ router.get("/users/:id", async (req, res) => {
 // Update a user by ID
 router.put("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, no_hp } = req.body;
   try {
-    const updatedUser = await updateUser(id, { name, email, password, role });
+    const updatedUser = await updateUser(id, { name, email, password, role, no_hp });
     res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ error: "Failed to update user" });

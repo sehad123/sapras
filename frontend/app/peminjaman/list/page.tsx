@@ -150,7 +150,7 @@ const ProsedurPeminjaman = () => {
                     <th className="border p-4 text-left">Kondisi</th>
                     <th className="border p-4 text-left">Lokasi</th>
                     <th className="border p-4 text-left">Kategori</th>
-                    <th className="border p-4 text-left">Tersedia</th>
+                    {/* <th className="border p-4 text-left">Tersedia</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -161,7 +161,7 @@ const ProsedurPeminjaman = () => {
                       <td className="border p-4">{barang.kondisi}</td>
                       <td className="border p-4">{barang.lokasi}</td>
                       <td className="border p-4">{getCategoryName(barang.kategoriId)}</td>
-                      <td className="border p-4">{barang.available}</td>
+                      {/* <td className="border p-4">{barang.available}</td> */}
                     </tr>
                   ))}
                 </tbody>

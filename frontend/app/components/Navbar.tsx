@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDashboard, faTable, faUsers, faClipboardList, faUserCircle, faHandHolding, faExclamationTriangle, faHistory, faBell, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faDashboard, faTable, faTasks, faUsers, faClipboardList, faUserCircle, faHandHolding, faExclamationTriangle, faHistory, faBell, faTimes } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -11,8 +11,12 @@ export function Navbar({ userId }) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [user, setUser] = useState({ name: "", role: "", email: "", id: "" });
   const [pendingCount, setPendingCount] = useState(0);
+  const [belumCount, setBelumCount] = useState(0);
+  const [pendingPengaduanCount, setPendingPengaduanCount] = useState(0);
   const [catatanCount, setCatatanCount] = useState(0);
-  const [notificationItems, setNotificationItems] = useState([]); // Tambahkan deklarasi notificationItems
+  const [catatanPengaduanCount, setCatatanPengaduanCount] = useState(0);
+  const [notificationItems, setNotificationItems] = useState([]);
+  const [notificationPengaduanItems, setNotificationPengaduanItems] = useState([]);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -26,11 +30,16 @@ export function Navbar({ userId }) {
   };
 
   useEffect(() => {
-    const fetchCounts = async (userId) => {
+    const fetchAllCounts = async (userId) => {
       try {
+        // Fetch data peminjaman
         const pendingResponse = await fetch("http://localhost:5000/api/peminjaman/count/pending");
         const pendingData = await pendingResponse.json();
         setPendingCount(pendingData.pendingCount);
+
+        const belumResponse = await fetch("http://localhost:5000/api/pengaduan/pelaksana/belum");
+        const belumData = await belumResponse.json();
+        setBelumCount(belumData.pelaksanaBelum);
 
         const catatanResponse = await fetch(`http://localhost:5000/api/peminjaman/user/${userId}/count`);
         const catatanData = await catatanResponse.json();
@@ -38,7 +47,20 @@ export function Navbar({ userId }) {
 
         const notificationResponse = await fetch(`http://localhost:5000/api/peminjaman/user/${userId}/notif`);
         const notificationData = await notificationResponse.json();
-        setNotificationItems(notificationData); // Simpan data notifikasi
+        setNotificationItems(notificationData);
+
+        // Fetch data pengaduan
+        const pendingPengaduanResponse = await fetch("http://localhost:5000/api/pengaduan/count/pending");
+        const pendingPengaduanData = await pendingPengaduanResponse.json();
+        setPendingPengaduanCount(pendingPengaduanData.pendingCount);
+
+        const catatanPengaduanResponse = await fetch(`http://localhost:5000/api/pengaduan/user/${userId}/count`);
+        const catatanPengaduanData = await catatanPengaduanResponse.json();
+        setCatatanPengaduanCount(catatanPengaduanData.count);
+
+        const notificationPengaduanResponse = await fetch(`http://localhost:5000/api/pengaduan/user/${userId}/notif`);
+        const notificationPengaduanData = await notificationPengaduanResponse.json();
+        setNotificationPengaduanItems(notificationPengaduanData);
       } catch (error) {
         console.error("Error fetching counts:", error);
       }
@@ -47,7 +69,7 @@ export function Navbar({ userId }) {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     if (storedUser) {
       setUser(storedUser);
-      fetchCounts(storedUser.id);
+      fetchAllCounts(storedUser.id);
     } else {
       router.push("/login");
     }
@@ -81,6 +103,33 @@ export function Navbar({ userId }) {
     }
   };
 
+  const handleUpdateNotificationPengaduan = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/pengaduan/user/${user.id}/notifikasi`, {
+        method: "PUT", // Menggunakan PUT karena ingin memperbarui status
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Jika berhasil, memperbarui tampilan notifikasi
+        setNotificationPengaduanItems([]);
+        setCatatanPengaduanCount(0);
+        // alert("Notifikasi berhasil diperbarui.");
+      } else {
+        alert("Gagal memperbarui notifikasi.");
+      }
+    } catch (error) {
+      console.error("Error updating notification:", error);
+    }
+  };
+  // Tambahkan fungsi baru untuk memanggil kedua fungsi pembaruan notifikasi
+  const handleMarkAllAsRead = async () => {
+    await handleUpdateNotificationPengaduan(); // Panggil fungsi pertama
+    await handleUpdateNotification(); // Panggil fungsi kedua setelahnya
+  };
+
   return (
     <div className="bg-gray-100 h-[100px]">
       <header className="flex justify-between items-center p-4 bg-gray-900">
@@ -100,10 +149,18 @@ export function Navbar({ userId }) {
                 Data Peminjaman
                 {pendingCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingCount}</span>}
               </Link>
-              <Link href="/data-pengaduan" className={`${pathname === "/data-pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
+              <Link href="/data-pengaduan" className={`${pathname === "/data-pengaduan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center relative`}>
                 <FontAwesomeIcon icon={faClipboardList} className="mr-2" />
                 Data Pengaduan
+                {pendingPengaduanCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingPengaduanCount}</span>}
               </Link>
+
+              <Link href="/data-penugasan" className={`${pathname === "/data-penugasan" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center relative`}>
+                <FontAwesomeIcon icon={faTasks} className="mr-2" />
+                Data Penugasan
+                {belumCount > 0 && <span className="absolute top-1 left-[90%] transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{belumCount}</span>}
+              </Link>
+
               <Link href="/data-pegawai" className={`${pathname === "/data-pegawai" ? "bg-gray-700 text-white" : "text-gray-300"} hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium flex items-center`}>
                 <FontAwesomeIcon icon={faUsers} className="mr-2" />
                 Data Pengguna
@@ -131,7 +188,7 @@ export function Navbar({ userId }) {
               {/* Notification Bell */}
               <div className="relative flex items-center">
                 <FontAwesomeIcon icon={faBell} className="text-gray-300 hover:text-white cursor-pointer" onClick={toggleNotification} />
-                {catatanCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{catatanCount}</span>}
+                {catatanCount + catatanPengaduanCount > 0 && <span className="absolute top-0 right-0 mt-[-4px] mr-[-6px] bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{catatanCount + catatanPengaduanCount}</span>}
 
                 {/* Modal kecil di bawah ikon lonceng */}
                 {isNotificationOpen && (
@@ -144,17 +201,33 @@ export function Navbar({ userId }) {
                       {notificationItems.length > 0 ? (
                         notificationItems.slice(0, 5).map((item, index) => (
                           <li key={index} className="text-gray-700 border-b border-gray-200 pb-2">
-                            <p className="font-semibold">Nama Barang: {item.barang.name}</p>
+                            <p className="font-semibold text-center">Peminjaman </p>
+                            <p className="text-sm">Nama Barang : {item.barang.name}</p>
                             <p className="text-sm">Tanggal Pengajuan: {new Date(item.createdAt).toLocaleDateString("id-ID")}</p>
                             <p className="text-sm">Catatan: {item.catatan || "Tidak ada catatan"}</p>
                             <p className="text-sm">Status: {item.status || "Tidak ada status"}</p>
                           </li>
                         ))
                       ) : (
-                        <li className="text-gray-500">Tidak ada notifikasi baru</li>
+                        <li className="text-gray-500"></li>
                       )}
                     </ul>
-                    <button onClick={handleUpdateNotification} className="text-blue-500 text-sm mt-3 underline">
+                    <ul className="space-y-2">
+                      {notificationPengaduanItems.length > 0 ? (
+                        notificationPengaduanItems.slice(0, 5).map((item, index) => (
+                          <li key={index} className="text-gray-700 border-b border-gray-200 pb-2">
+                            <p className="font-semibold text-center">Pengaduan: </p>
+                            <p className="text-sm">Kategori: {item.kategori || "Tidak ada catatan"}</p>
+                            <p className="text-sm">Tanggal Pengaduan: {new Date(item.createdAt).toLocaleDateString("id-ID")}</p>
+                            <p className="text-sm">Catatan: {item.catatan || "Tidak ada catatan"}</p>
+                            <p className="text-sm">Status: {item.status || "Tidak ada status"}</p>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="text-gray-500"></li>
+                      )}
+                    </ul>
+                    <button onClick={handleMarkAllAsRead} className="text-blue-500 text-sm mt-3 underline">
                       Tandai Semua sebagai Dibaca
                     </button>
                   </div>

@@ -104,6 +104,8 @@ const PeminjamanList = ({ userId }) => {
     setCurrentPage((prevPage) => prevPage + direction);
   };
 
+  const hasApprovedStatus = filteredPeminjaman.some((item) => item.status === "APPROVED");
+
   const paginatedData = filteredPeminjaman.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredPeminjaman.length / itemsPerPage);
 
@@ -163,8 +165,7 @@ const PeminjamanList = ({ userId }) => {
                 <th className="py-3 px-4 text-left">Status</th>
                 <th className="py-3 px-4 text-left">Catatan</th>
                 <th className="py-3 px-4 text-left">Bukti Persetujuan</th>
-                <th className="py-3 px-4 text-left">Action</th>
-                <th className="py-3 px-4 text-left">Bukti Pengembalian</th>
+                {hasApprovedStatus && <th className="py-3 px-4 text-left">Action</th>} <th className="py-3 px-4 text-left">Bukti Pengembalian</th>
               </tr>
             </thead>
             <tbody>
@@ -185,13 +186,16 @@ const PeminjamanList = ({ userId }) => {
                       "No file"
                     )}
                   </td>
-                  <td className="py-2 px-1">
-                    {item.status === "APPROVED" && (
-                      <button className="bg-green-500 text-white py-1 px-4 rounded hover:bg-green-600 transition duration-200" onClick={() => handleReturn(item.id)}>
-                        Kembalikan
-                      </button>
-                    )}
-                  </td>
+                  {hasApprovedStatus && (
+                    <td className="py-2 px-1 pl-10">
+                      {item.status === "APPROVED" && (
+                        <button className="bg-green-500 text-white py-1 px-4 rounded hover:bg-green-600 transition duration-200" onClick={() => handleReturn(item.id)}>
+                          Kembalikan
+                        </button>
+                      )}
+                    </td>
+                  )}
+
                   <td className="py-2 px-4  pl-16">
                     {item.bukti_pengembalian ? (
                       <a href={`http://localhost:5000/uploads/${item.bukti_pengembalian}`} className="text-blue-500 underline" download>

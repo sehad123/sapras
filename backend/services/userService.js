@@ -3,11 +3,11 @@ const bcrypt = require("bcrypt");
 const prisma = new PrismaClient();
 
 // Create a new user (already implemented)
-const registerUser = async ({ name, email, password, role }) => {
+const registerUser = async ({ name, email, password, role, no_hp }) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
     const newUser = await prisma.user.create({
-      data: { name, email, password: hashedPassword, role },
+      data: { name, email, password: hashedPassword, role, no_hp },
     });
     return newUser;
   } catch (error) {
@@ -18,9 +18,9 @@ const registerUser = async ({ name, email, password, role }) => {
 // Read all users with role "Pegawai"
 const getAllPegawaiUsers = async () => {
   return await prisma.user.findMany({
-    // where: {
-    //   role: "Pegawai",
-    // },
+    where: {
+      role: "Pelaksana",
+    },
   });
 };
 
@@ -32,7 +32,7 @@ const getUserById = async (id) => {
 };
 
 // Update a user
-const updateUser = async (id, { name, email, password, role }) => {
+const updateUser = async (id, { name, email, password, role, no_hp }) => {
   const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
   try {
     const updatedUser = await prisma.user.update({
@@ -42,6 +42,7 @@ const updateUser = async (id, { name, email, password, role }) => {
         email,
         password: hashedPassword,
         role,
+        no_hp,
       },
     });
     return updatedUser;

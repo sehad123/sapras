@@ -7,11 +7,12 @@ import { faTimes } from "@fortawesome/free-solid-svg-icons";
 export default function EditPegawaiModal({ user, onClose, onSave }) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
+  const [no_hp, setNo_hp] = useState(user.no_hp);
   const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
     setLoading(true);
-    await onSave(user.id, { name, email });
+    await onSave(user.id, { name, email, no_hp });
     setLoading(false);
   };
 
@@ -35,6 +36,10 @@ export default function EditPegawaiModal({ user, onClose, onSave }) {
           <div>
             <label className="block text-sm font-medium">Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">No HP</label>
+            <input type="number" value={no_hp} onChange={(e) => setNo_hp(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-500" />
           </div>
         </div>
 
