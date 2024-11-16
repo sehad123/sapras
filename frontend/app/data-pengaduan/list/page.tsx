@@ -186,7 +186,8 @@ const PengaduanList = () => {
             <label className="block mb-2 text-sm">Status:</label>
             <select className="p-2 border rounded-md" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">Semua</option>
-              <option value="APPROVED">APPROVED</option>
+              <option value="APPROVED">Disetujui</option>
+              <option value="ONPROGGRESS">ONPROGGRESS</option>
               <option value="REJECTED">REJECTED</option>
               <option value="PENDING">PENDING</option>
               <option value="DIKEMBALIKAN">COMPLETED</option>
@@ -253,7 +254,7 @@ const PengaduanList = () => {
                   <strong>Deskripsi:</strong> {pengaduan.deskripsi}
                 </p>
 
-                <p className="text-sm mb-1">{pengaduan.status === "APPROVED" ? <strong>Status: Onprogress</strong> : <strong>Status: {pengaduan.status}</strong>}</p>
+                <p className="text-sm mb-1">{pengaduan.status === "APPROVED" ? <strong>Status: Disetujui</strong> : <strong>Status: {pengaduan.status}</strong>}</p>
                 <p className="text-sm mb-1">
                   <strong>Catatan:</strong> {pengaduan.catatan ? pengaduan.catatan : ""}
                 </p>
@@ -278,7 +279,7 @@ const PengaduanList = () => {
 
                     {/* Tombol Assign ke Pelaksana hanya muncul saat statusnya "APPROVED" */}
                     {pengaduan.status === "APPROVED" && (
-                      <button onClick={() => openModal("assign", pengaduan.id)} className="bg-blue-500 text-white px-4 py-2 rounded-md">
+                      <button onClick={() => openModal("assign", pengaduan.id)} className="bg-blue-500 text-white px-4 py-2 ml-20 rounded-md">
                         Assign ke Pelaksana
                       </button>
                     )}

@@ -19,7 +19,6 @@ const createPengaduan = async ({ userId, kategori, deskripsi, photo, lokasi }) =
         status: "PENDING",
         catatan: "",
         tanggapan: "",
-        beban_pengaduan: "",
         notifikasi: "",
       },
     });
@@ -32,20 +31,29 @@ const createPengaduan = async ({ userId, kategori, deskripsi, photo, lokasi }) =
 
 const assignPelaksana = async ({ userId, pengaduanId }) => {
   const parsedPengaduanId = parseInt(pengaduanId, 10);
+  const parsedUserId = parseInt(userId, 10);
 
   try {
-    const pengaduan = await prisma.pelaksana.create({
+    // First, create the pelaksana record
+    const pelaksana = await prisma.pelaksana.create({
       data: {
-        userId: parseInt(userId, 10), // Konversi userId menjadi Int
+        userId: parsedUserId, // Konversi userId menjadi Int
         pengaduanId: parsedPengaduanId,
         tgl_selesai: null,
         is_selesai: "Belum",
       },
     });
-    return pengaduan;
+
+    // Then, update the pengaduan status
+    await prisma.pengaduan.update({
+      where: { id: parsedPengaduanId }, // Using pengaduanId as the id
+      data: { status: "ONPROGGRESS" },
+    });
+
+    return pelaksana; // Return pelaksana after both actions are complete
   } catch (error) {
-    console.error("Error creating pengaduan:", error);
-    throw new Error("Internal Server Error. Failed to create pengaduan.");
+    console.error("Error assigning pelaksana:", error);
+    throw new Error("Internal Server Error. Failed to assign pelaksana.");
   }
 };
 
@@ -76,10 +84,10 @@ const getAllPelaksana = async () => {
 // };
 
 // Service untuk menyetujui pengaduan
-const approvePengaduan = async (id, catatan, beban_pengaduan) => {
+const approvePengaduan = async (id, catatan) => {
   return await prisma.pengaduan.update({
     where: { id: parseInt(id) },
-    data: { status: "APPROVED", catatan: catatan, notifikasi: "Ya", beban_pengaduan },
+    data: { status: "APPROVED", catatan: catatan, notifikasi: "Ya" },
   });
 };
 
@@ -227,6 +235,16 @@ const countPengaduanDisetujui = async () => {
   return pendingCount;
 };
 
+const countPengaduanOnprogress = async () => {
+  const pendingCount = await prisma.pengaduan.count({
+    where: {
+      status: "ONPROGGRESS",
+    },
+  });
+
+  return pendingCount;
+};
+
 const countPengaduanDitolak = async () => {
   const pendingCount = await prisma.pengaduan.count({
     where: {
@@ -264,4 +282,5 @@ module.exports = {
   assignPelaksana,
   getAllPelaksana,
   countPendingPelaksana,
+  countPengaduanOnprogress,
 };

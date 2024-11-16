@@ -8,6 +8,7 @@ const PengaduanStatusCard = () => {
     approved: 0,
     rejected: 0,
     completed: 0,
+    onprogress: 0,
   });
 
   useEffect(() => {
@@ -17,11 +18,13 @@ const PengaduanStatusCard = () => {
         const approvedResponse = await fetch("http://localhost:5000/api/pengaduan/count/approved");
         const rejectedResponse = await fetch("http://localhost:5000/api/pengaduan/count/rejected");
         const completedResponse = await fetch("http://localhost:5000/api/pengaduan/count/completed");
+        const progressResponse = await fetch("http://localhost:5000/api/pengaduan/count/onprogress");
 
         const pendingData = await pendingResponse.json();
         const approvedData = await approvedResponse.json();
         const rejectedData = await rejectedResponse.json();
         const completedData = await completedResponse.json();
+        const onprogressData = await progressResponse.json();
 
         // Set data masing-masing sesuai dengan kunci yang tepat
         setStatusCounts({
@@ -29,6 +32,7 @@ const PengaduanStatusCard = () => {
           approved: approvedData.approvedCount, // Update kunci sesuai respons API
           rejected: rejectedData.rejectedCount, // Update kunci sesuai respons API
           completed: completedData.completedCount, // Update kunci sesuai respons API
+          onprogress: onprogressData.onprogressCount, // Update kunci sesuai respons API
         });
       } catch (error) {
         console.error("Error fetching status counts", error);
@@ -47,6 +51,10 @@ const PengaduanStatusCard = () => {
       <div style={{ ...styles.card, backgroundColor: "#90be6d" }}>
         <h3>Approved</h3>
         <p style={styles.count}>{statusCounts.approved}</p>
+      </div>
+      <div style={{ ...styles.card, backgroundColor: "blue" }}>
+        <h3>OnProgress</h3>
+        <p style={styles.count}>{statusCounts.onprogress}</p>
       </div>
       <div style={{ ...styles.card, backgroundColor: "#f94144" }}>
         <h3>Rejected</h3>

@@ -100,7 +100,7 @@ const PengaduanList = ({ userId }) => {
     setCurrentPage((prevPage) => prevPage + direction);
   };
 
-  const hasApprovedStatus = filteredPengaduan.some((item) => item.status === "APPROVED");
+  const hasApprovedStatus = filteredPengaduan.some((item) => item.status === "ONPROGGRESS");
 
   const paginatedData = filteredPengaduan.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredPengaduan.length / itemsPerPage);
@@ -119,7 +119,8 @@ const PengaduanList = ({ userId }) => {
           <label className="text-sm text-gray-600 mb-1">Status:</label>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="border p-2 rounded">
             <option value="">Semua</option>
-            <option value="APPROVED">OnProgress</option>
+            <option value="APPROVED">Disetujui</option>
+            <option value="ONPROGGRESS">OnProgress</option>
             <option value="COMPLETED">Completed</option>
             <option value="PENDING">Pending</option>
             <option value="REJECTED">Rejected</option>
@@ -169,13 +170,13 @@ const PengaduanList = ({ userId }) => {
                   <td className="py-2 px-4">{item.kategori}</td>
                   <td className="py-2 px-4">{item.deskripsi}</td>
                   <td className="py-2 px-4">{new Date(item.createdAt).toLocaleDateString("id-ID")}</td>
-                  <td className="py-2 px-4">{item.status === "APPROVED" ? "ONPROGRESS" : item.status}</td>
+                  <td className="py-2 px-4">{item.status === "APPROVED" ? "Disetujui" : item.status}</td>
                   <td className="py-2 px-4">{item.catatan || ""}</td>
                   <td className="border border-gray-300 px-6 py-3">{item.photo ? <img src={`http://localhost:5000${item.photo}`} alt={item.name} className="mx-auto w-20 h-20 object-cover" /> : "No Image"}</td>
 
                   {hasApprovedStatus && (
                     <td className="py-2 px-1 pl-10">
-                      {item.status === "APPROVED" && (
+                      {item.status === "ONPROGGRESS" && (
                         <button className="bg-green-500 text-white py-1 px-4 rounded hover:bg-green-600 transition duration-200" onClick={() => handleTanggapan(item.id)}>
                           <FontAwesomeIcon icon={faCheck} />
                         </button>

@@ -67,9 +67,9 @@ router.get("/pengaduan/pelaksana", async (req, res) => {
 // Route untuk menyetujui pengaduan
 router.put("/pengaduan/:id/approve", async (req, res) => {
   const { id } = req.params;
-  const { catatan, beban_pengaduan } = req.body;
+  const { catatan } = req.body;
   try {
-    const pengaduan = await approvePengaduan(id, catatan, beban_pengaduan);
+    const pengaduan = await approvePengaduan(id, catatan);
     res.json(pengaduan);
   } catch (error) {
     res.status(500).json({ error: "Failed to approve pengaduan" });
@@ -179,6 +179,15 @@ router.get("/pengaduan/count/rejected", async (req, res) => {
   try {
     const rejectedCount = await countPengaduanDitolak();
     res.json({ rejectedCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to count rejected pengaduan" });
+  }
+});
+
+router.get("/pengaduan/count/onprogress", async (req, res) => {
+  try {
+    const onprogressCount = await countPengaduanDitolak();
+    res.json({ onprogressCount });
   } catch (error) {
     res.status(500).json({ error: "Failed to count rejected pengaduan" });
   }

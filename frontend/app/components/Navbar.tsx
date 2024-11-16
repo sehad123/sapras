@@ -71,7 +71,7 @@ export function Navbar({ userId }) {
       setUser(storedUser);
       fetchAllCounts(storedUser.id);
     } else {
-      router.push("/login");
+      router.push("/data-pegawai");
     }
   }, [router]);
 

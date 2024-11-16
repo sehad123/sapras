@@ -71,7 +71,6 @@ model Pengaduan {
   jam            String           // Kolom untuk menunjukkan jam saat ini (misalnya "17:20")
   kategori       String?          // Field untuk menyimpan URL foto
   photo          String?          // Field untuk menyimpan URL foto
-  beban_pengaduan String?
   lokasi          String?
   catatan         String?
   deskripsi      String?
@@ -111,4 +110,5 @@ enum StatusPengaduan {
   APPROVED
   REJECTED
   COMPLETED
+  ONPROGGRESS
 }
